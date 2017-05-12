@@ -46,6 +46,10 @@
     <string name="no_sites">There are no sites to display</string>
     <string name="no_hubs">No HUbs to Display</string>
     <string name="select_channel">Please select channel(s) to view data</string>
+    <string name="select_a_site">Select a Site:</string>
+    <string name="select_a_hub">Select a Hub:</string>
+    <string name="select_an_instrument">Select an Instrument:</string>
+    <string name="select_channel_s">Select Channel(s):</string>
 
 
 </resources>

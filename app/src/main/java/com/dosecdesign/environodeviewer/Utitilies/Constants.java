@@ -53,4 +53,6 @@ public class Constants {
     public static final String extra_string_ict_no_start_date = "/AML1G204/?channels=DateAndTime,Battery%20Voltage%20(V),Temperature_1%20(deg.C),External%20Supply%20Voltage%20(V)&start=";
 
 
+    // Persistant memory Constants
+    public static final int READ_BLOCK_SIZE = 100;
 }

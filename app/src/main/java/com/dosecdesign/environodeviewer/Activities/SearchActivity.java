@@ -1,6 +1,7 @@
 package com.dosecdesign.environodeviewer.Activities;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
@@ -25,9 +26,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -115,6 +120,41 @@ public class SearchActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText(getApplicationContext(), R.string.url_unrecognised, Toast.LENGTH_SHORT).show();
         }
+        mGoBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSelectedChannels !=null){
+                    String res = mHttpUtil.concatUrlQuery(mQuery, "channels", mSelectedChannels);
+                    try {
+                        String channelsString = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
+                        Log.d(Constants.DEBUG_TAG," Encoded test url: "+channelsString);
+                        String completeUrl = mQuery.concat(channelsString);
+
+                        // TODO add a date range
+                        String urlWithStartDate = completeUrl.concat("&start=2017-04-11%2009:00:00");
+                        URL url = new URL(urlWithStartDate);
+                        mDataRequestFlag = true;
+                        new RetrieveJsonDataTask().execute(url);
+
+                        Log.d(Constants.DEBUG_TAG, "Complete URL is : "+completeUrl);
+                        Log.d(Constants.DEBUG_TAG, "Complete URL is : "+ urlWithStartDate);
+
+                        //clear the channels listview
+
+                        //new RetrieveJsonDataTask().execute(requestURL);
+
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+
+                    //Log.d(Constants.DEBUG_TAG, "new url is :"+ res);
+                } else{
+                    // advise user to select some channels
+                    // TODO  -  before displaying toast, check if there are actually no available channels for the user to select!!
+                    Toast.makeText(getApplicationContext(), R.string.select_channel, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
 
     }
@@ -195,6 +235,13 @@ public class SearchActivity extends AppCompatActivity {
                 } else if(mDataRequestFlag){
                     Log.d(Constants.DEBUG_TAG, "Fantastic");
                     mDataRequestFlag=false;
+
+                    // Save the returned data to device cache
+                    saveToCache(mResponse);
+
+                    // Start plotting activity
+                    Intent intent = new Intent(getBaseContext(),DataViewActivity.class);
+                    startActivity(intent);
 
                 }
 
@@ -439,41 +486,7 @@ public class SearchActivity extends AppCompatActivity {
                         Log.d(Constants.DEBUG_TAG,"Selected channel (no formatting) :" + channel);
                     }
                 });
-                mGoBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (mSelectedChannels !=null){
-                            String res = mHttpUtil.concatUrlQuery(mQuery, "channels", mSelectedChannels);
-                            try {
-                                URL requestURL = new URL(res);
 
-                                String encodedRequestUrl = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
-                                Log.d(Constants.DEBUG_TAG," Encoded test url: "+encodedRequestUrl);
-                                String completeUrl = mQuery.concat(encodedRequestUrl);
-                                String urlWithStartDate = completeUrl.concat("&start=2017-04-11%2009:00:00");
-                                URL url = new URL(urlWithStartDate);
-                                mDataRequestFlag = true;
-                                new RetrieveJsonDataTask().execute(url);
-
-                                Log.d(Constants.DEBUG_TAG, "Complete URL is : "+completeUrl);
-                                Log.d(Constants.DEBUG_TAG, "Complete URL is : "+ urlWithStartDate);
-
-                                //clear the channels listview
-
-                                //new RetrieveJsonDataTask().execute(requestURL);
-
-                            } catch (MalformedURLException e) {
-                                e.printStackTrace();
-                            }
-
-                            //Log.d(Constants.DEBUG_TAG, "new url is :"+ res);
-                        } else{
-                            // advise user to select some channels
-                            // TODO  -  before displaying toast, check if there are actually no available channels for the user to select!!
-                            Toast.makeText(getApplicationContext(), R.string.select_channel, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
 
 
             } else {
@@ -487,6 +500,33 @@ public class SearchActivity extends AppCompatActivity {
             //Log.d(Constants.DEBUG_TAG, "selected channel count is "+ mSelectedChannels.size());
 
         }
+    }
+
+    public void saveToCache(String response){
+
+        try{
+            // Get instance of cache directory
+            File cacheDir = getCacheDir();
+            File file = new File(cacheDir.getAbsolutePath(), "requested_data.txt");
+
+            FileOutputStream fOut =new FileOutputStream(file);
+
+            OutputStreamWriter osw = new OutputStreamWriter(fOut);
+
+            // Write the user requested channel string to file
+            osw.write(response);
+            osw.flush();
+            osw.close();
+
+            // TODO remove this toast
+            Toast.makeText(getBaseContext(), "Saved file to cache", Toast.LENGTH_SHORT).show();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }
