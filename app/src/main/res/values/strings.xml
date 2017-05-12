@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">EnviroNode Viewer</string>
+    <string name="bt_unaavailble">Bluetooth is not available</string>
+    <string name="title_paired_devices">PAIRED DEVICES</string>
+    <string name="title_other_devices">DISCOVERED DEVICES</string>
+    <string name="button_scan">scan_btn</string>
+    <string name="no_paired_devices">No paired devices found</string>
+    <string name="no_discovered_device">No devices discovered</string>
+    <string name="device_detail">device clicked:</string>
+    <string name="discovery_error">An error has occurred whilst trying to make your device discoverable</string>
+    <string name="connectable">Host device is in discoverable mode.</string>
+    <string name="connectable_discoverable">Host device is not in discoverable mode but can still receive connections.</string>
+    <string name="not_connected">You are not connected to any device!</string>
+    <string name="title_connected">State: Connected to  </string>
+    <string name="title_connecting">STATE: Connecting...</string>
+    <string name="title_disconnected">STATE: Not Connected</string>
+    <string name="toast_unable_to_connect">Unable to connect device</string>
+    <string name="toast_connection_lost">Connection was lost</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="plot">Plot Data</string>
+    <string name="plot_line">Plot Line Graph</string>
+    <string name="plot_bar">Plot Bar Graph</string>
+    <string name="plot_pie">Plot Pie Graph</string>
+    <string name="plot_mulitple">Plot Multiple Graphs</string>
+    <string name="dateandtime">Date and Time</string>
+    <string name="weight">Weight (g)</string>
+    <string name="please_wait">Please wait...</string>
+    <string name="http_fail">Error fetching data</string>
+    <string name="view_existing_data">View Existing Data</string>
+    <string name="connect_to_device">Connect to Device</string>
+    <string name="title_activity_login">Sign in</string>
+    <string name="api_key_string">Your Key...</string>
+    <string name="go">GO</string>
+    <string name="back">Back</string>
+    <string name="api_dialog_message">Please enter your Key</string>
+    <string name="your_sites">Your Sites:</string>
+    <string name="key">Enter Key:</string>
+    <string name="search">Search</string>
+    <string name="serial">Serial:</string>
+    <string name="battery_voltage_v">Battery Voltage (V):</string>
+    <string name="dashboard_for">Dashboard for:</string>
+    <string name="volts">  V</string>
+    <string name="http_error">Not able to fetch data from server, please check url</string>
+    <string name="url_unrecognised">URL not recognised, please try again</string>
+    <string name="no_sites">There are no sites to display</string>
+    <string name="no_hubs">No HUbs to Display</string>
+    <string name="select_channel">Please select channel(s) to view data</string>
+
+
+</resources>
