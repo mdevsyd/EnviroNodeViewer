@@ -17,6 +17,7 @@ import com.dosecdesign.environodeviewer.Adapters.SiteAdapter;
 import com.dosecdesign.environodeviewer.Model.JsonModel;
 import com.dosecdesign.environodeviewer.R;
 import com.dosecdesign.environodeviewer.Utitilies.Constants;
+import com.dosecdesign.environodeviewer.Utitilies.DeviceMemoryUtils;
 import com.dosecdesign.environodeviewer.Utitilies.HttpUtils;
 import com.dosecdesign.environodeviewer.Utitilies.StringUtils;
 import com.google.gson.Gson;
@@ -67,10 +68,14 @@ public class SearchActivity extends AppCompatActivity {
     private Boolean mChannelSearchFlag;
     private Boolean mDataRequestFlag;
 
-    private List mSelectedChannels;
+    private ArrayList mSelectedChannels;
 
     private StringUtils mStringUtils;
     private String mQuery;
+
+    private DeviceMemoryUtils mDevMem;
+
+    private String mCachedResponse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,9 +114,29 @@ public class SearchActivity extends AppCompatActivity {
         mSelectedChannels = new ArrayList();
 
         mStringUtils = new StringUtils();
-        mQuery= "";
+        mQuery = "";
 
-        String baseUrl = mHttpUtil.buildUrl();
+        mDevMem = new DeviceMemoryUtils();
+
+        mCachedResponse = mDevMem.readFromCache(getCacheDir(),"site");
+
+        if(mCachedResponse != null){
+            Log.d(Constants.DEBUG_TAG,"GetSiteData(mCachedResponse)");
+            new GetSiteDataTask().execute(mCachedResponse);
+        }
+        else{
+            try {
+                String baseUrl = mHttpUtil.buildUrl();
+                URL url = new URL(baseUrl);
+                new RetrieveJsonDataTask().execute(url);
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), R.string.url_unrecognised, Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        /*String baseUrl = mHttpUtil.buildUrl();
         try {
             URL url = new URL(baseUrl);
             new RetrieveJsonDataTask().execute(url);
@@ -119,36 +144,34 @@ public class SearchActivity extends AppCompatActivity {
         } catch (MalformedURLException e) {
             e.printStackTrace();
             Toast.makeText(getApplicationContext(), R.string.url_unrecognised, Toast.LENGTH_SHORT).show();
-        }
+        }*/
         mGoBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mSelectedChannels !=null){
+                if (mSelectedChannels != null) {
                     String res = mHttpUtil.concatUrlQuery(mQuery, "channels", mSelectedChannels);
                     try {
                         String channelsString = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
-                        Log.d(Constants.DEBUG_TAG," Encoded test url: "+channelsString);
+                        Log.d(Constants.DEBUG_TAG, " Encoded test url: " + channelsString);
                         String completeUrl = mQuery.concat(channelsString);
 
-                        // TODO add a date range
-                        String urlWithStartDate = completeUrl.concat("&start=2017-04-11%2009:00:00");
+                        // TODO add a date range - this is DUMMY DATA!!!
+                        String urlWithStartDate = completeUrl.concat("&start=2017-05-05%2009:00:00");
+
                         URL url = new URL(urlWithStartDate);
                         mDataRequestFlag = true;
                         new RetrieveJsonDataTask().execute(url);
 
-                        Log.d(Constants.DEBUG_TAG, "Complete URL is : "+completeUrl);
-                        Log.d(Constants.DEBUG_TAG, "Complete URL is : "+ urlWithStartDate);
+                        Log.d(Constants.DEBUG_TAG, "Complete URL is : " + urlWithStartDate);
 
-                        //clear the channels listview
+                        Log.d(Constants.DEBUG_TAG,"number of channels: "+mSelectedChannels.size());
 
-                        //new RetrieveJsonDataTask().execute(requestURL);
 
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
                     }
 
-                    //Log.d(Constants.DEBUG_TAG, "new url is :"+ res);
-                } else{
+                } else {
                     // advise user to select some channels
                     // TODO  -  before displaying toast, check if there are actually no available channels for the user to select!!
                     Toast.makeText(getApplicationContext(), R.string.select_channel, Toast.LENGTH_SHORT).show();
@@ -157,6 +180,13 @@ public class SearchActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Clear the previously selected channel array when user presses back key
+        mSelectedChannels.clear();
     }
 
     public class RetrieveJsonDataTask extends AsyncTask<URL, String, String> {
@@ -183,7 +213,7 @@ public class SearchActivity extends AppCompatActivity {
 
 
             URL url = params[0];
-            Log.d(Constants.DEBUG_TAG, "RetrieveJsonTask url :"+url);
+            Log.d(Constants.DEBUG_TAG, "RetrieveJsonTask url :" + url);
 
             try {
 
@@ -231,28 +261,58 @@ public class SearchActivity extends AppCompatActivity {
                 // Only start GetChannelDataTask if channelSearchFlag is true, otherwise populate site, hub & inst ListViews
                 if (mChannelSearchFlag) {
                     new GetChannelDataTask().execute(mResponse);
-                    mChannelSearchFlag =false;
-                } else if(mDataRequestFlag){
-                    Log.d(Constants.DEBUG_TAG, "Fantastic");
-                    mDataRequestFlag=false;
+                    mChannelSearchFlag = false;
+                } else if (mDataRequestFlag) {
+                    mDataRequestFlag = false;
 
-                    // Save the returned data to device cache
-                    saveToCache(mResponse);
+                    // CHeck if the there is data in returned data[]
+                    if (checkDataArray(result)) {
 
-                    // Start plotting activity
-                    Intent intent = new Intent(getBaseContext(),DataViewActivity.class);
-                    startActivity(intent);
+                        // Data exists, save it to device cache
 
-                }
+                        saveToCache(mResponse);
 
-                else {
+                        // Start plotting activity
+                        Intent intent = new Intent(getBaseContext(), DataViewActivity.class);
+                        intent.putExtra(Constants.SELECTED_CHANNELS, mSelectedChannels.size());
+                        intent.putStringArrayListExtra(Constants.SEL_CH_ARRAY, (ArrayList<String>) mSelectedChannels);
+                        startActivity(intent);
+                    }
+
+                    //TODO makes this into a dialog instead of toast.
+                    else {
+                        Toast.makeText(getBaseContext(), R.string.no_data_exists, Toast.LENGTH_LONG).show();
+                    }
+                } else {
+
+                    // TODO testing from cache
+
+
+
+
                     new GetSiteDataTask().execute(mResponse);
 
                 }
             } else {
                 Toast.makeText(getApplicationContext(), R.string.http_error, Toast.LENGTH_SHORT).show();
+                mDialog.dismiss();
             }
         }
+    }
+
+    private Boolean checkDataArray(String response) {
+        try {
+
+            JSONObject responseObj = new JSONObject(response);
+            JSONArray dataArray = responseObj.getJSONArray("data");
+            //Log.d(Constants.DEBUG_TAG, "data in checkData :" + dataArray);
+            if (dataArray.length() > 0) {
+                return true;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public class GetSiteDataTask extends AsyncTask<String, String, List> {
@@ -441,6 +501,7 @@ public class SearchActivity extends AppCompatActivity {
 
             String response = params[0];
             List channels = new ArrayList();
+            mSelectedChannels.clear();
 
 
             try {
@@ -478,15 +539,12 @@ public class SearchActivity extends AppCompatActivity {
                 mChannelsLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        /*String correctedChannel = mStringUtils.formatChannelString(String.valueOf(parent.getItemAtPosition(position)));
-                        mSelectedChannels.add(correctedChannel);
-                        Log.d(Constants.DEBUG_TAG, "Selected channel: "+ correctedChannel);*/
+
                         String channel = String.valueOf(parent.getItemAtPosition(position));
                         mSelectedChannels.add(channel);
-                        Log.d(Constants.DEBUG_TAG,"Selected channel (no formatting) :" + channel);
+                        Log.d(Constants.DEBUG_TAG, "Selected channel (no formatting) :" + channel);
                     }
                 });
-
 
 
             } else {
@@ -502,14 +560,14 @@ public class SearchActivity extends AppCompatActivity {
         }
     }
 
-    public void saveToCache(String response){
+    public void saveToCache(String response) {
 
-        try{
+        try {
             // Get instance of cache directory
             File cacheDir = getCacheDir();
             File file = new File(cacheDir.getAbsolutePath(), "requested_data.txt");
 
-            FileOutputStream fOut =new FileOutputStream(file);
+            FileOutputStream fOut = new FileOutputStream(file);
 
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
 

@@ -55,4 +55,9 @@ public class Constants {
 
     // Persistant memory Constants
     public static final int READ_BLOCK_SIZE = 100;
+
+    // Intent constants
+    public static final String SELECTED_CHANNELS = "selected_channels";
+    public static final String SEL_CH_ARRAY = "selected_channels_array";
+    public static final String STRING_RESULT = "query_result";
 }

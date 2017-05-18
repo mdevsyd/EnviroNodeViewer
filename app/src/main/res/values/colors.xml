@@ -6,4 +6,12 @@
     <color name="colorBlack">#000000</color>
     <color name="colorWhite">#FFFFFF</color>
 
+    <color name="graphBlue">#1a1aff</color>
+    <color name="graphRed">#ff0000</color>
+    <color name="graphGreen">#009933</color>
+    <color name="graphYellow">#ffc61a</color>
+
+
+
+
 </resources>
