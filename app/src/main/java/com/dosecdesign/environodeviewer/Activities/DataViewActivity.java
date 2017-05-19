@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import com.dosecdesign.environodeviewer.R;
 import com.dosecdesign.environodeviewer.Utitilies.Constants;
+import com.dosecdesign.environodeviewer.Utitilies.DeviceMemoryUtils;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -45,6 +46,8 @@ public class DataViewActivity extends AppCompatActivity {
     private LineDataSet mSet;
     private List mColours;
 
+    private DeviceMemoryUtils mDevMem;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,8 +58,11 @@ public class DataViewActivity extends AppCompatActivity {
         mLineChart3 = (LineChart) findViewById(R.id.dataPlot3);
         mLineChart4 = (LineChart) findViewById(R.id.dataPlot4);
 
+        mDevMem = new DeviceMemoryUtils();
+
         // Read from the cache
-        mCachedResponse = readFromCache();
+        //mCachedResponse = readFromCache();
+        mCachedResponse = mDevMem.readFromCache(getCacheDir(),"channels");
 
         mValues = new ArrayList<>();
         mSelChannels = new ArrayList();
@@ -81,6 +87,7 @@ public class DataViewActivity extends AppCompatActivity {
             mColours.add(R.color.graphRed);
             mColours.add(R.color.graphYellow);
         }
+
 
         getValuesFromResponse(extras.getInt(Constants.SELECTED_CHANNELS), mSelChannels);
     }
@@ -115,7 +122,7 @@ public class DataViewActivity extends AppCompatActivity {
             }
             isr.close();
 
-            Log.d(Constants.DEBUG_TAG, "File read OK : " + temp);
+            //Log.d(Constants.DEBUG_TAG, "File read OK : " + temp);
             return temp;
 
         } catch (IOException e) {

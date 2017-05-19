@@ -45,7 +45,7 @@
     <string name="url_unrecognised">URL not recognised, please try again</string>
     <string name="no_sites">There are no sites to display</string>
     <string name="no_hubs">No HUbs to Display</string>
-    <string name="select_channel">Please select channel(s) to view data</string>
+    <string name="select_channel">You must select a site, a hub, an instrument and some channels to view data.</string>
     <string name="select_a_site">Select a Site:</string>
     <string name="select_a_hub">Select a Hub:</string>
     <string name="select_an_instrument">Select an Instrument:</string>
@@ -53,6 +53,8 @@
     <string name="no_data_exists">No data exists for these channels on these dates, please try again.</string>
     <string name="cannot_plot">Unable to plot these values, please select other dates or channels.</string>
     <string name="server_unavailable">Unfortunately, the server is unavailable at this time. Please try again later.</string>
+    <string name="invalid_date_range">Invalid date range, please try again.</string>
+    <string name="try_again">An error ocurred, please try again.</string>
 
 
 </resources>

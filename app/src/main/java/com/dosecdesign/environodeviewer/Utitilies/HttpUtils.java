@@ -21,7 +21,6 @@ public class HttpUtils {
                 .appendPath(Constants.HTTP_ICT_PATH_1)
                 .appendPath(Constants.HTTP_ICT_PATH_2)
                 .appendPath(Constants.HTTP_ICT_PATH_3);
-        Log.d(Constants.DEBUG_TAG, " String built is: "+ builder.build().toString());
 
         return builder.build().toString();
     }
@@ -59,19 +58,25 @@ public class HttpUtils {
         return base.concat(query);
     }
 
-    public String concatUrlQuery(String base, String type, List<String> channels){
+    public String concatUrlQuery(String base, String type, List<String> paths){
 
         String baseUrl = base;
         switch (type){
             case ("channels"):
                 baseUrl=baseUrl.concat("/?channels=");
 
-                for (int i=0;i<channels.size()-1;i++){
-                    baseUrl = baseUrl.concat(channels.get(i).concat(","));
+                for (int i=0;i<paths.size()-1;i++){
+                    baseUrl = baseUrl.concat(paths.get(i).concat(","));
                 }
-                baseUrl = baseUrl.concat(channels.get(channels.size()-1));
+                baseUrl = baseUrl.concat(paths.get(paths.size()-1));
                 //String encoded = Uri.encode(baseUrl);
                 return baseUrl;
+            case("startDateTime"):
+                // Create a string of complete start date and time for http requests
+                for (int i = 0; i<paths.size()-1; i++){
+
+                }
+
         }
        return null;
     }

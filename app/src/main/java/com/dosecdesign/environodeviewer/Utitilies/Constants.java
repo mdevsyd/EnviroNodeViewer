@@ -10,6 +10,7 @@ public class Constants {
 
     // Debug TAG
     public static final String DEBUG_TAG = "debug";
+    public static final String ERROR_TAG = "error";
 
     // Bluetooth Device Constants
     public static final String EXTRA_DEVICE_ADDRESS = "device_address";

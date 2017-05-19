@@ -1,6 +1,8 @@
 package com.dosecdesign.environodeviewer.Activities;
 
+import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -10,7 +12,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.dosecdesign.environodeviewer.Adapters.SiteAdapter;
@@ -20,6 +25,7 @@ import com.dosecdesign.environodeviewer.Utitilies.Constants;
 import com.dosecdesign.environodeviewer.Utitilies.DeviceMemoryUtils;
 import com.dosecdesign.environodeviewer.Utitilies.HttpUtils;
 import com.dosecdesign.environodeviewer.Utitilies.StringUtils;
+import com.dosecdesign.environodeviewer.Utitilies.TimeUtils;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -27,20 +33,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends AppCompatActivity implements View.OnClickListener {
 
     private ListView mSitesLv;
     private ListView mHubsLv;
@@ -48,11 +54,16 @@ public class SearchActivity extends AppCompatActivity {
     private ListView mChannelsLv;
     private SiteAdapter mSiteAdapter;
     private JsonModel mJsonModel;
-    private Gson mGson;
     private HttpUtils mHttpUtil;
     private ProgressDialog mDialog;
     private JsonModel sitesJson;
     private Button mGoBtn;
+    private ImageView mStartDateBtn;
+    private ImageView mEndDateBtn;
+    private ImageView mStartTimeBtn;
+    private ImageView mEndTimeBtn;
+
+    private int mDay, mMonth, mYear, mHour, mMin;
 
     private String mResponse;
 
@@ -71,11 +82,21 @@ public class SearchActivity extends AppCompatActivity {
     private ArrayList mSelectedChannels;
 
     private StringUtils mStringUtils;
+    private TimeUtils mTimeUtils;
     private String mQuery;
 
     private DeviceMemoryUtils mDevMem;
 
     private String mCachedResponse;
+    private String mStartTime;
+    private String mStartDate;
+    private String mEndTime;
+    private String mEndDate;
+    private int mStartYear, mStartMonth, mStartDay;
+    private int mEndYear, mEndMonth, mEndDay;
+    private int mStartHour, mStartMin;
+    private int mEndHour, mEndMin;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +108,10 @@ public class SearchActivity extends AppCompatActivity {
         mInstrumentsLv = (ListView) findViewById(R.id.instrumentLv);
         mChannelsLv = (ListView) findViewById(R.id.channelsLv);
         mGoBtn = (Button) findViewById(R.id.goBtn);
+        mStartDateBtn = (ImageView) findViewById(R.id.startDateBtn);
+        mStartTimeBtn = (ImageView) findViewById(R.id.startTimeBtn);
+        mEndDateBtn = (ImageView) findViewById(R.id.endDateBtn);
+        mEndTimeBtn = (ImageView) findViewById(R.id.endTimeBtn);
 
         sitesJson = new JsonModel();
 
@@ -114,17 +139,21 @@ public class SearchActivity extends AppCompatActivity {
         mSelectedChannels = new ArrayList();
 
         mStringUtils = new StringUtils();
+        mTimeUtils = new TimeUtils();
         mQuery = "";
 
         mDevMem = new DeviceMemoryUtils();
 
-        mCachedResponse = mDevMem.readFromCache(getCacheDir(),"site");
+        mCachedResponse = mDevMem.readFromCache(getCacheDir(), "site");
 
-        if(mCachedResponse != null){
-            Log.d(Constants.DEBUG_TAG,"GetSiteData(mCachedResponse)");
+        mStartYear = mStartMonth = mStartDay = mEndYear = mEndMonth = mEndDay =
+                mStartHour = mStartMin = mEndHour = mEndMin = 0;
+
+
+        if (mCachedResponse != null) {
+            Log.d(Constants.DEBUG_TAG, "GetSiteData(mCachedResponse)");
             new GetSiteDataTask().execute(mCachedResponse);
-        }
-        else{
+        } else {
             try {
                 String baseUrl = mHttpUtil.buildUrl();
                 URL url = new URL(baseUrl);
@@ -136,48 +165,12 @@ public class SearchActivity extends AppCompatActivity {
             }
         }
 
-        /*String baseUrl = mHttpUtil.buildUrl();
-        try {
-            URL url = new URL(baseUrl);
-            new RetrieveJsonDataTask().execute(url);
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), R.string.url_unrecognised, Toast.LENGTH_SHORT).show();
-        }*/
-        mGoBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSelectedChannels != null) {
-                    String res = mHttpUtil.concatUrlQuery(mQuery, "channels", mSelectedChannels);
-                    try {
-                        String channelsString = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
-                        Log.d(Constants.DEBUG_TAG, " Encoded test url: " + channelsString);
-                        String completeUrl = mQuery.concat(channelsString);
-
-                        // TODO add a date range - this is DUMMY DATA!!!
-                        String urlWithStartDate = completeUrl.concat("&start=2017-05-05%2009:00:00");
-
-                        URL url = new URL(urlWithStartDate);
-                        mDataRequestFlag = true;
-                        new RetrieveJsonDataTask().execute(url);
-
-                        Log.d(Constants.DEBUG_TAG, "Complete URL is : " + urlWithStartDate);
-
-                        Log.d(Constants.DEBUG_TAG,"number of channels: "+mSelectedChannels.size());
-
-
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    }
-
-                } else {
-                    // advise user to select some channels
-                    // TODO  -  before displaying toast, check if there are actually no available channels for the user to select!!
-                    Toast.makeText(getApplicationContext(), R.string.select_channel, Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        // Set on click listeners for date/time and GO buttons
+        mStartDateBtn.setOnClickListener(this);
+        mStartTimeBtn.setOnClickListener(this);
+        mEndDateBtn.setOnClickListener(this);
+        mEndTimeBtn.setOnClickListener(this);
+        mGoBtn.setOnClickListener(this);
 
 
     }
@@ -188,6 +181,185 @@ public class SearchActivity extends AppCompatActivity {
         // Clear the previously selected channel array when user presses back key
         mSelectedChannels.clear();
     }
+
+    @Override
+    public void onClick(View v) {
+
+        // Get reference to current date and time
+        final Calendar c = Calendar.getInstance();
+
+        switch (v.getId()) {
+            case R.id.startDateBtn:
+                // Show date picker, save date
+                mDay = c.get(Calendar.DAY_OF_MONTH);
+                mMonth = c.get(Calendar.MONTH);
+                mYear = c.get(Calendar.YEAR);
+
+                DatePickerDialog datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        mStartYear = year;
+                        mStartMonth = monthOfYear;
+                        mStartDay = dayOfMonth;
+                        int month = monthOfYear + 1;
+                        String monthString = String.valueOf(month);
+                        if (month < 10) {
+                            monthString = "0" + String.valueOf(month);
+                        }
+                        String dayString = String.valueOf(dayOfMonth);
+                        if (dayOfMonth < 10) {
+                            dayString = "0" + String.valueOf(dayOfMonth);
+                        }
+                        mStartDate = year + "-" + monthString + "-" + dayString;
+                        Log.d(Constants.DEBUG_TAG, "selected start date set to: " + mStartDate);
+                    }
+                }
+                        , mYear, mMonth, mDay);
+                datePickerDialog.show();
+                break;
+
+            case R.id.startTimeBtn:
+                // Show time picker, save selected time
+                mHour = c.get(Calendar.HOUR_OF_DAY);
+                mMin = c.get(Calendar.MINUTE);
+
+                TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        mStartHour = hourOfDay;
+                        mStartMin = minute;
+                        String hourString = String.valueOf(hourOfDay);
+                        String minString = String.valueOf(minute);
+                        if (hourOfDay < 10) {
+                            hourString = "0" + hourOfDay;
+                        }
+                        if (minute < 10) {
+                            minString = "0" + minute;
+                        }
+                        mStartTime = hourString + ":" + minString + ":" + "00";
+                        Log.d(Constants.DEBUG_TAG, "start time selected: " + mStartTime);
+
+                    }
+                }, mHour, mMin, false);
+                timePickerDialog.show();
+                break;
+
+            case R.id.endDateBtn:
+                // Show date picker, save date
+                mDay = c.get(Calendar.DAY_OF_MONTH);
+                mMonth = c.get(Calendar.MONTH);
+                mYear = c.get(Calendar.YEAR);
+
+                datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        mEndYear = year;
+                        mEndMonth = monthOfYear;
+                        mEndDay = dayOfMonth;
+                        int month = monthOfYear + 1;
+                        String monthString = String.valueOf(month);
+                        if (month < 10) {
+                            monthString = "0" + String.valueOf(month);
+                        }
+                        String dayString = String.valueOf(dayOfMonth);
+                        if (dayOfMonth < 10) {
+                            dayString = "0" + String.valueOf(dayOfMonth);
+                        }
+                        mEndDate = year + "-" + monthString + "-" + dayString;
+                        Log.d(Constants.DEBUG_TAG, "selected end date set to: " + mEndDate);
+                    }
+                }
+                        , mYear, mMonth, mDay);
+                datePickerDialog.show();
+                break;
+
+            case R.id.endTimeBtn:
+                // Show time picker, save selected time
+                mHour = c.get(Calendar.HOUR_OF_DAY);
+                mMin = c.get(Calendar.MINUTE);
+
+                timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        mEndHour = hourOfDay;
+                        mEndMin = minute;
+                        // Format values for use in http request
+                        String hourString = String.valueOf(hourOfDay);
+                        String minString = String.valueOf(minute);
+                        if (hourOfDay < 10) {
+                            hourString = "0" + hourOfDay;
+                        }
+                        if (minute < 10) {
+                            minString = "0" + minute;
+                        }
+                        mEndTime = hourString + ":" + minString + ":" + "00";
+                        Log.d(Constants.DEBUG_TAG, "end time selected: " + mEndTime);
+                    }
+                }, mHour, mMin, false);
+                timePickerDialog.show();
+                break;
+
+            case R.id.goBtn:
+                if (mSelectedChannels.size() != 0) {
+                    String res = mHttpUtil.concatUrlQuery(mQuery, "channels", mSelectedChannels);
+                    try {
+                        // Build the channel string from user selected channels
+                        String channelsString = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
+                        String completeUrl = mQuery.concat(channelsString);
+
+                        // Create timeAndDate strings from user input
+                        String startDateTime = mStartDate + " " + mStartTime;
+                        String endDateTime = mEndDate + " " + mEndTime;
+
+                        Log.d(Constants.DEBUG_TAG, "start :" + startDateTime);
+                        Log.d(Constants.DEBUG_TAG, "end :" + endDateTime);
+
+
+                        // Verify, encode and concat timestamp strings
+                        if (mStringUtils.verifyString(startDateTime, "dateTimeLength") && (mStringUtils.verifyString(endDateTime, "dateTimeLength"))) {
+
+                            // Check selected date range
+                            if (mTimeUtils.compareDates(startDateTime, endDateTime, getBaseContext())) {
+
+                                // Date range valid, create datestamp for http request
+                                String timestamp = "&start=" + startDateTime + "&end=" + endDateTime;
+
+                                // Encode the datestamp and create a URL for http request
+                                timestamp = Uri.encode(timestamp, "=,&:?()%");
+                                String apiQuery = completeUrl.concat(timestamp);
+                                URL url = new URL(apiQuery);
+                                mDataRequestFlag = true;
+                                new RetrieveJsonDataTask().execute(url);
+
+                                Log.d(Constants.DEBUG_TAG, "Complete URL is : " + apiQuery);
+
+
+                            } else {
+                                // User has input invalid date range
+                                Toast.makeText(getBaseContext(), R.string.invalid_date_range, Toast.LENGTH_SHORT).show();
+                            }
+
+                        } else {
+                            // A formatting error has occurred
+                            Log.e(Constants.ERROR_TAG, "Error formatting date/time");
+
+                        }
+
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+
+                } else {
+                    // advise user to select some channels
+                    // TODO  -  before displaying toast, check if there are actually no available channels for the user to select!!
+                    Toast.makeText(getApplicationContext(), R.string.select_channel, Toast.LENGTH_LONG).show();
+                }
+                break;
+        }
+    }
+
 
     public class RetrieveJsonDataTask extends AsyncTask<URL, String, String> {
         @Override
@@ -269,8 +441,7 @@ public class SearchActivity extends AppCompatActivity {
                     if (checkDataArray(result)) {
 
                         // Data exists, save it to device cache
-
-                        saveToCache(mResponse);
+                        mDevMem.saveToCache(getCacheDir(), mResponse, getBaseContext(), "channels");
 
                         // Start plotting activity
                         Intent intent = new Intent(getBaseContext(), DataViewActivity.class);
@@ -284,12 +455,6 @@ public class SearchActivity extends AppCompatActivity {
                         Toast.makeText(getBaseContext(), R.string.no_data_exists, Toast.LENGTH_LONG).show();
                     }
                 } else {
-
-                    // TODO testing from cache
-
-
-
-
                     new GetSiteDataTask().execute(mResponse);
 
                 }
@@ -336,7 +501,6 @@ public class SearchActivity extends AppCompatActivity {
                 JSONArray sitesArray = sitesObject.getJSONArray("sites");
                 // Copy array to a local variable
                 mSitesArray = sitesArray;
-                Log.d(Constants.DEBUG_TAG, "sites length is: " + sitesArray.length());
 
                 for (int i = 0; i < sitesArray.length(); i++) {
                     // Get reference to each site array object
@@ -364,7 +528,6 @@ public class SearchActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         mSelectedSite = String.valueOf(parent.getItemAtPosition(position));
-                        Log.d(Constants.DEBUG_TAG, "Site is: " + mSelectedSite);
                         new GetHubDataTask().execute(mResponse, (String.valueOf(position)));
                     }
                 });
@@ -560,31 +723,12 @@ public class SearchActivity extends AppCompatActivity {
         }
     }
 
-    public void saveToCache(String response) {
-
-        try {
-            // Get instance of cache directory
-            File cacheDir = getCacheDir();
-            File file = new File(cacheDir.getAbsolutePath(), "requested_data.txt");
-
-            FileOutputStream fOut = new FileOutputStream(file);
-
-            OutputStreamWriter osw = new OutputStreamWriter(fOut);
-
-            // Write the user requested channel string to file
-            osw.write(response);
-            osw.flush();
-            osw.close();
-
-            // TODO remove this toast
-            Toast.makeText(getBaseContext(), "Saved file to cache", Toast.LENGTH_SHORT).show();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        // Clear the previously selected channel array when user presses back key
+        mSelectedChannels.clear();
     }
+
 
 }
