@@ -55,6 +55,10 @@
     <string name="server_unavailable">Unfortunately, the server is unavailable at this time. Please try again later.</string>
     <string name="invalid_date_range">Invalid date range, please try again.</string>
     <string name="try_again">An error ocurred, please try again.</string>
+    <string name="last24">Last 24 Hours</string>
+    <string name="last_7_days">Last 7 Days</string>
+    <string name="last_month">Last Month</string>
+    <string name="last_year">Last Year</string>
 
 
 </resources>

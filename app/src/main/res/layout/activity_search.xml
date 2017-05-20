@@ -1,161 +1,236 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_search"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:orientation="vertical"
     tools:context="com.dosecdesign.environodeviewer.Activities.SearchActivity">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/select_a_site"
-        android:textStyle="bold"
-        android:gravity=""/>
-    <ListView
-        android:id="@+id/siteLv"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.5"
-        android:divider="@null"
 
-
-        />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/select_a_hub"
-        android:textStyle="bold"/>
-    <ListView
-
-        android:id="@+id/hubLv"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="@null"
-
-
-        />
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="10dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/select_an_instrument"
-        android:textStyle="bold"/>
-
-    <ListView
-        android:id="@+id/instrumentLv"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="@null"
-
-        />
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="10dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/select_channel_s"
-        android:textStyle="bold"/>
-
-    <ListView
-        android:id="@+id/channelsLv"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="3"
-        android:divider="@null"
-
-        />
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="10dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Select Start/End Date and TIme:"
-        android:textStyle="bold"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1.33"
-        android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
-
-            <LinearLayout
+            <TextView
                 android:layout_width="match_parent"
-                android:layout_height="35dp"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent"
-                    android:text="Start"
-                    android:gravity="center_vertical"/>
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_weight="2"
-                    android:layout_height="match_parent"
-                    android:src="@mipmap/calendar"
-                    android:id="@+id/startDateBtn"/>
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_weight="2"
-                    android:layout_height="match_parent"
-                    android:src="@mipmap/time"
-                    android:id="@+id/startTimeBtn"/>
+                android:layout_height="wrap_content"
+                android:gravity=""
+                android:text="@string/select_a_site"
+                android:textStyle="bold" />
 
-            </LinearLayout>
-            <LinearLayout
+            <ListView
+                android:id="@+id/siteLv"
                 android:layout_width="match_parent"
-                android:layout_height="35dp"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent"
-                    android:text="End"
-                    android:gravity="center_vertical"/>
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:divider="@null"
 
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_weight="2"
-                    android:layout_height="match_parent"
-                    android:src="@mipmap/calendar"
-                    android:id="@+id/endDateBtn"/>
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_weight="2"
-                    android:layout_height="match_parent"
-                    android:src="@mipmap/time"
-                    android:id="@+id/endTimeBtn"/>
 
-            </LinearLayout>
 
-        </LinearLayout>
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/go"
-                android:layout_gravity="end"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:id="@+id/goBtn"
                 />
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/select_a_hub"
+                android:textStyle="bold" />
+
+            <ListView
+
+                android:id="@+id/hubLv"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2"
+                android:divider="@null"
 
 
-</LinearLayout>
+                />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0.25"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/select_an_instrument"
+                android:textStyle="bold" />
+
+            <ListView
+                android:id="@+id/instrumentLv"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2"
+                android:divider="@null"
+
+                />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0.25"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/select_channel_s"
+                android:textStyle="bold" />
+
+            <ListView
+                android:id="@+id/channelsLv"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+
+                android:divider="@null"
+
+                />
+
+            <Button
+                android:id="@+id/clearChBtn"
+                style="@style/Widget.AppCompat.Button.Colored"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Clear Selected Channels" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0.25"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Select Date and TIme Range:"
+                android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="3"
+                android:orientation="vertical">
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:id="@+id/last24Btn"
+                    android:text="@string/last24"/>
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:id="@+id/last7DaysBtn"
+                    android:text="@string/last_7_days"/>
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:id="@+id/lastMonthBtn"
+                    android:text="@string/last_month"/>
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:id="@+id/last365DaysBtn"
+                    android:text="@string/last_year"/>
+                <android.support.v4.widget.Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.5"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:text="OR - select a range below:"
+                    android:textStyle="bold"/>
+                <android.support.v4.widget.Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.5"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1.5"
+                        android:gravity="center_vertical"
+                        android:text="Start" />
+
+                    <ImageView
+                        android:id="@+id/startDateBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:src="@mipmap/calendar" />
+
+                    <ImageView
+                        android:id="@+id/startTimeBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:src="@mipmap/time" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1.5"
+                        android:gravity="center_vertical"
+                        android:text="End" />
+
+                    <ImageView
+                        android:id="@+id/endDateBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:src="@mipmap/calendar" />
+
+                    <ImageView
+                        android:id="@+id/endTimeBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:src="@mipmap/time" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0.25"/>
+
+            <Button
+                android:id="@+id/goBtn"
+                style="@style/Widget.AppCompat.Button.Colored"
+                android:layout_width="match_parent"
+
+                android:layout_height="match_parent"
+                android:layout_gravity="end"
+                android:text="@string/go" />
+        </LinearLayout>
+
+
+
+
+
+</ScrollView>

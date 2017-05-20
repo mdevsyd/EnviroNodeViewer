@@ -9,11 +9,14 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -39,8 +42,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -58,6 +59,12 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     private ProgressDialog mDialog;
     private JsonModel sitesJson;
     private Button mGoBtn;
+    private Button mClearCh;
+    private Button m24HrBtn;
+    private Button m7DayBtn;
+    private Button mMonthBtn;
+    private Button mYearBtn;
+
     private ImageView mStartDateBtn;
     private ImageView mEndDateBtn;
     private ImageView mStartTimeBtn;
@@ -92,10 +99,15 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     private String mStartDate;
     private String mEndTime;
     private String mEndDate;
+    private String mStartDateStamp;
+    private String mEndDateStamp;
+
     private int mStartYear, mStartMonth, mStartDay;
     private int mEndYear, mEndMonth, mEndDay;
     private int mStartHour, mStartMin;
     private int mEndHour, mEndMin;
+
+    private Boolean[] mActionReg;
 
 
     @Override
@@ -108,6 +120,11 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mInstrumentsLv = (ListView) findViewById(R.id.instrumentLv);
         mChannelsLv = (ListView) findViewById(R.id.channelsLv);
         mGoBtn = (Button) findViewById(R.id.goBtn);
+        mClearCh = (Button) findViewById(R.id.clearChBtn);
+        m24HrBtn = (Button) findViewById(R.id.last24Btn);
+        m7DayBtn = (Button) findViewById(R.id.last7DaysBtn);
+        mMonthBtn = (Button) findViewById(R.id.lastMonthBtn);
+        mYearBtn = (Button) findViewById(R.id.last365DaysBtn);
         mStartDateBtn = (ImageView) findViewById(R.id.startDateBtn);
         mStartTimeBtn = (ImageView) findViewById(R.id.startTimeBtn);
         mEndDateBtn = (ImageView) findViewById(R.id.endDateBtn);
@@ -146,8 +163,17 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
         mCachedResponse = mDevMem.readFromCache(getCacheDir(), "site");
 
+        mStartDateStamp = "";
+        mEndDateStamp="";
         mStartYear = mStartMonth = mStartDay = mEndYear = mEndMonth = mEndDay =
                 mStartHour = mStartMin = mEndHour = mEndMin = 0;
+
+        // 16 int array is to set certain actions within this activity
+        // Initialise all to false
+        mActionReg = new Boolean[16];
+        for (int i =0;i<mActionReg.length; i++){
+            mActionReg[i]=false;
+        }
 
 
         if (mCachedResponse != null) {
@@ -165,12 +191,17 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             }
         }
 
-        // Set on click listeners for date/time and GO buttons
+        // Set on click listeners for all buttons
         mStartDateBtn.setOnClickListener(this);
         mStartTimeBtn.setOnClickListener(this);
         mEndDateBtn.setOnClickListener(this);
         mEndTimeBtn.setOnClickListener(this);
         mGoBtn.setOnClickListener(this);
+        mClearCh.setOnClickListener(this);
+        m24HrBtn.setOnClickListener(this);
+        m7DayBtn.setOnClickListener(this);
+        mMonthBtn.setOnClickListener(this);
+        mYearBtn.setOnClickListener(this);
 
 
     }
@@ -182,14 +213,20 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mSelectedChannels.clear();
     }
 
+    /**
+     *
+     * @param v
+     */
     @Override
     public void onClick(View v) {
+        Date newDate = null;
 
         // Get reference to current date and time
         final Calendar c = Calendar.getInstance();
 
         switch (v.getId()) {
             case R.id.startDateBtn:
+                mActionReg[0]=true;
                 // Show date picker, save date
                 mDay = c.get(Calendar.DAY_OF_MONTH);
                 mMonth = c.get(Calendar.MONTH);
@@ -220,6 +257,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 break;
 
             case R.id.startTimeBtn:
+                mActionReg[0]=true;
                 // Show time picker, save selected time
                 mHour = c.get(Calendar.HOUR_OF_DAY);
                 mMin = c.get(Calendar.MINUTE);
@@ -246,6 +284,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 break;
 
             case R.id.endDateBtn:
+                mActionReg[0]=true;
                 // Show date picker, save date
                 mDay = c.get(Calendar.DAY_OF_MONTH);
                 mMonth = c.get(Calendar.MONTH);
@@ -276,6 +315,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 break;
 
             case R.id.endTimeBtn:
+                mActionReg[0]=true;
                 // Show time picker, save selected time
                 mHour = c.get(Calendar.HOUR_OF_DAY);
                 mMin = c.get(Calendar.MINUTE);
@@ -308,13 +348,24 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                         // Build the channel string from user selected channels
                         String channelsString = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
                         String completeUrl = mQuery.concat(channelsString);
+                        String startDateTime = "";
+                        String endDateTime = "";
 
-                        // Create timeAndDate strings from user input
-                        String startDateTime = mStartDate + " " + mStartTime;
-                        String endDateTime = mEndDate + " " + mEndTime;
+                        // Check bits of action register
+                        if(mActionReg[0]) {
+                            // User has entered custom dates, create timestamp strings
+                            startDateTime = mStartDate + " " + mStartTime;
+                            endDateTime = mEndDate + " " + mEndTime;
 
-                        Log.d(Constants.DEBUG_TAG, "start :" + startDateTime);
-                        Log.d(Constants.DEBUG_TAG, "end :" + endDateTime);
+                            Log.d(Constants.DEBUG_TAG, "start :" + startDateTime);
+                            Log.d(Constants.DEBUG_TAG, "end :" + endDateTime);
+
+                        }
+                        else{
+                            // User has chosen a predefined date range, create timestamp strings
+                            startDateTime = mStartDateStamp;
+                            endDateTime = mEndDateStamp;
+                        }
 
 
                         // Verify, encode and concat timestamp strings
@@ -351,12 +402,41 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                         e.printStackTrace();
                     }
 
-                } else {
+                } else if((mSelectedChannels.size()==0) || (mSelectedHub==null) || (mSelectedInstrument==null)){
                     // advise user to select some channels
                     // TODO  -  before displaying toast, check if there are actually no available channels for the user to select!!
                     Toast.makeText(getApplicationContext(), R.string.select_channel, Toast.LENGTH_LONG).show();
                 }
                 break;
+            case R.id.clearChBtn:
+                mSelectedChannels.clear();
+                break;
+            case R.id.last24Btn:
+                // Subtract one day from today
+                newDate = mTimeUtils.addOrSubDays(-1, Calendar.getInstance().getTime());
+                mStartDateStamp = mTimeUtils.formatDate(newDate);
+                mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                break;
+            case R.id.last7DaysBtn:
+                // Subtract 7 days from today
+                newDate = mTimeUtils.addOrSubDays(-7, Calendar.getInstance().getTime());
+                mStartDateStamp = mTimeUtils.formatDate(newDate);
+                mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                break;
+            case R.id.lastMonthBtn:
+                // Subtract 1 month from today
+                newDate = mTimeUtils.addOrSubMonths(-1, Calendar.getInstance().getTime());
+                mStartDateStamp = mTimeUtils.formatDate(newDate);
+                mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                break;
+            case R.id.last365DaysBtn:
+                // Subtract 1 year from today
+                newDate = mTimeUtils.addOrSubYears(-1, Calendar.getInstance().getTime());
+                mStartDateStamp = mTimeUtils.formatDate(newDate);
+                mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                break;
+
+
         }
     }
 
@@ -583,6 +663,21 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             if (list != null) {
                 SiteAdapter hubAdapter = new SiteAdapter(SearchActivity.this, list);
                 mHubsLv.setAdapter(hubAdapter);
+                setListViewHeightBasedOnChildren(mHubsLv);
+
+                // Make the lv scroll inside the overall scrollview
+                // source: http://stackoverflow.com/questions/18367522/android-list-view-inside-a-scroll-view
+                mHubsLv.setOnTouchListener(new View.OnTouchListener() {
+                    // Setting on Touch Listener for handling the touch inside ScrollView
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        // Disallow the touch request for parent scroll on touch of child view
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        return false;
+
+                    }
+                });
+
                 mHubsLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -636,6 +731,18 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             if (list != null) {
                 SiteAdapter siteAdapter = new SiteAdapter(SearchActivity.this, list);
                 mInstrumentsLv.setAdapter(siteAdapter);
+                setListViewHeightBasedOnChildren(mInstrumentsLv);
+
+                // Allow for lv touch by overriding scrollview touch
+                mInstrumentsLv.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        // Disallow the touch request for parent scroll on touch of child view
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        return false;
+
+                    }
+                });
                 mInstrumentsLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -695,6 +802,16 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                 final SiteAdapter channelsAdapter = new SiteAdapter(SearchActivity.this, list);
                 mChannelsLv.setAdapter(channelsAdapter);
+                setListViewHeightBasedOnChildren(mChannelsLv);
+                mChannelsLv.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        // Disallow the touch request for parent scroll on touch of child view
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        return false;
+
+                    }
+                });
 
                 // Create a list of the channels clicked
                 mSelectedChannels = new ArrayList();
@@ -730,5 +847,25 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mSelectedChannels.clear();
     }
 
+    public static void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null)
+            return;
+
+        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.UNSPECIFIED);
+        int totalHeight = 0;
+        View view = null;
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            view = listAdapter.getView(i, view, listView);
+            if (i == 0)
+                view.setLayoutParams(new ViewGroup.LayoutParams(desiredWidth, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            view.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
+            totalHeight += view.getMeasuredHeight();
+        }
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        listView.setLayoutParams(params);
+    }
 
 }
