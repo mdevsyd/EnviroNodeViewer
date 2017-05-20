@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import com.dosecdesign.environodeviewer.R;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -26,11 +27,37 @@ public class TimeUtils {
         return Calendar.getInstance().getTime();
     }
 
+    public String getFormattedCurrentDateTime(){
+        Date today = Calendar.getInstance().getTime();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        return formatter.format(today);
+    }
+
     public Date addOrSubDays(int numDays, Date oldDate){
         Calendar cal = Calendar.getInstance();
         cal.setTime(oldDate);
         cal.add(Calendar.DATE, numDays);
         return cal.getTime();
+    }
+
+    public Date addOrSubMonths(int numMonths, Date oldDate){
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(oldDate);
+        cal.add(Calendar.MONTH, numMonths);
+        return cal.getTime();
+
+    }
+    public Date addOrSubYears(int numYears, Date oldDate){
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(oldDate);
+        cal.add(Calendar.YEAR, numYears);
+        return cal.getTime();
+
+    }
+
+    public String formatDate(Date date){
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        return formatter.format(date);
     }
 
     /**
