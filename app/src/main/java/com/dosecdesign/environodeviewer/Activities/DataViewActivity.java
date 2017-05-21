@@ -1,5 +1,6 @@
 package com.dosecdesign.environodeviewer.Activities;
 
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,11 +10,15 @@ import com.dosecdesign.environodeviewer.R;
 import com.dosecdesign.environodeviewer.Utitilies.Constants;
 import com.dosecdesign.environodeviewer.Utitilies.DeviceMemoryUtils;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,6 +50,7 @@ public class DataViewActivity extends AppCompatActivity {
     private LineData mData;
     private LineDataSet mSet;
     private List mColours;
+    private String[] mDatestamps;
 
     private DeviceMemoryUtils mDevMem;
 
@@ -61,7 +67,6 @@ public class DataViewActivity extends AppCompatActivity {
         mDevMem = new DeviceMemoryUtils();
 
         // Read from the cache
-        //mCachedResponse = readFromCache();
         mCachedResponse = mDevMem.readFromCache(getCacheDir(),"channels");
 
         mValues = new ArrayList<>();
@@ -72,13 +77,19 @@ public class DataViewActivity extends AppCompatActivity {
         mAllEntries = new ArrayList();
 
         mDataSets = new ArrayList<>();
+
         mData = new LineData();
 
         mSet = new LineDataSet(null, null);
         mColours = new ArrayList<Integer>();
 
+        // Extract data from intent
         Bundle extras = getIntent().getExtras();
         mSelChannels = extras.getStringArrayList(Constants.SEL_CH_ARRAY);
+        mDatestamps = extras.getStringArray(Constants.DATESTAMP_ARRAY);
+        for (int i=0;i<mDatestamps.length;i++){
+            Log.d(Constants.DEBUG_TAG, "mDatestamp: "+mDatestamps[i]);
+        }
 
         // Create an array of colours - 12 repeated colours currently
         for(int i=0; i<3;i++){
@@ -87,7 +98,6 @@ public class DataViewActivity extends AppCompatActivity {
             mColours.add(R.color.graphRed);
             mColours.add(R.color.graphYellow);
         }
-
 
         getValuesFromResponse(extras.getInt(Constants.SELECTED_CHANNELS), mSelChannels);
     }
@@ -100,37 +110,6 @@ public class DataViewActivity extends AppCompatActivity {
         mAllData.clear();
     }
 
-    private String readFromCache() {
-        try {
-            // Get the cache directory
-            File cacheDir = getCacheDir();
-            File file = new File(cacheDir, "requested_data.txt");
-            FileInputStream fIn = new FileInputStream(file);
-
-            InputStreamReader isr = new InputStreamReader(fIn);
-
-            char[] inputBuffer = new char[Constants.READ_BLOCK_SIZE];
-            String temp = "";
-            int charRead;
-            while ((charRead = isr.read(inputBuffer)) > 0) {
-                // Convert the read chars to a string
-                String readString = String.copyValueOf(inputBuffer, 0, charRead);
-                temp += readString;
-
-                inputBuffer = new char[Constants.READ_BLOCK_SIZE];
-
-            }
-            isr.close();
-
-            //Log.d(Constants.DEBUG_TAG, "File read OK : " + temp);
-            return temp;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
 
     /**
      * Create entries for line chart
@@ -157,6 +136,10 @@ public class DataViewActivity extends AppCompatActivity {
 
                 // TODO, currently can't select dateandtime
                 for(int j=0; j<dataArray.length();j++){
+
+                    // Populate the string array for XAxis values
+
+
                     JSONObject object = dataArray.getJSONObject(j);
                     String item = object.getString(chNames.get(i));
 
@@ -181,8 +164,12 @@ public class DataViewActivity extends AppCompatActivity {
                 }
                 // Create LineDataSet Object (list, label)
                 mSet = new LineDataSet(mEntries, chNames.get(i));
-                mSet.setColor((Integer) mColours.get(i));
+                mSet.setColor(R.color.colorPrimary);
                 mSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+                mSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+                mSet.setDrawFilled(true);
+                mSet.setFillColor(Color.CYAN);
+
 
                 mDataSets = new ArrayList<ILineDataSet>();
                 mDataSets.add(mSet);
@@ -202,7 +189,6 @@ public class DataViewActivity extends AppCompatActivity {
                 mAllData.add(mList);
                 mList.clear();*/
             }
-            //mEntries.clear();
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -219,37 +205,86 @@ public class DataViewActivity extends AppCompatActivity {
     }
 
     public void createLineChart(LineData data, int chart){
-        //LineData data = new LineData(dataSet);
-
         switch(chart){
             case 1:
-                YAxis leftAxis = mLineChart1.getAxisLeft();
 
-                //leftAxis.setAxisMaximum(100f);
+                mLineChart1.setDescription(null);
+                mLineChart1.animateX(2000);
                 mLineChart1.setData(data);
                 mLineChart1.invalidate();
 
-                Log.d(Constants.DEBUG_TAG, "lineChart "+chart);
+                try{
+                    final String[] xVals = new String[mEntries.size()];
+                    for (int i = 0; i < mEntries.size(); i++) {
+                        xVals[i] = (""+mDatestamps[i]);
+                    }
+                    XAxis xAxis = mLineChart1.getXAxis();
+                    xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+                    xAxis.setDrawGridLines(true);
+                    xAxis.setGranularity(1f);
+                    xAxis.setAvoidFirstLastClipping(true);
+                    xAxis.setDrawGridLines(false);
+                    xAxis.setValueFormatter(new MyAxisValueFormatter(xVals));
+
+                }catch(NullPointerException e ){
+                    e.printStackTrace();
+                }
+
                 break;
             case 2:
-                Log.d(Constants.DEBUG_TAG, "Data for line chart :"+data);
                 mLineChart2.setData(data);
                 mLineChart2.invalidate();
-                Log.d(Constants.DEBUG_TAG, "lineChart "+chart);
 
                 break;
             case 3:
                 mLineChart3.setData(data);
                 mLineChart3.invalidate();
-                Log.d(Constants.DEBUG_TAG, "lineChart "+chart);
 
                 break;
             case 4:
                 mLineChart4.setData(data);
                 mLineChart4.invalidate();
-                Log.d(Constants.DEBUG_TAG, "lineChart "+chart);
 
                 break;
+        }
+
+    }
+
+    public void testChart(){
+        Log.d(Constants.DEBUG_TAG, "In test Chart");
+        final String[] xVals = new String[100];
+        for (int i = 0; i < 100; i++) {
+            xVals[i] = ((i+15) + "mm");
+        }
+
+        IAxisValueFormatter formatter = new IAxisValueFormatter() {
+            @Override
+            public String getFormattedValue(float value, AxisBase axis) {
+                return xVals[(int)value];
+            }
+        };
+
+        XAxis xAxis = mLineChart1.getXAxis();
+        xAxis.setGranularity(1f);
+        xAxis.setValueFormatter(formatter);
+
+
+
+
+    }
+
+    public class MyAxisValueFormatter implements IAxisValueFormatter{
+
+        private String[] mXVals;
+
+        public MyAxisValueFormatter(String[] xVals){
+            this.mXVals=xVals;
+        }
+
+        @Override
+        public String getFormattedValue(float value, AxisBase axis) {
+            // value is the position of the label on the x axis
+            return mXVals[(int)value];
         }
 
     }
