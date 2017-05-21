@@ -67,8 +67,6 @@ public class DeviceMemoryUtils {
 
             }
             isr.close();
-
-            Log.d(Constants.DEBUG_TAG, "File read OK : " + temp);
             return temp;
 
         } catch (IOException e) {

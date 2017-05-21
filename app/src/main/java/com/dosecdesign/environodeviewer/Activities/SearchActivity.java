@@ -18,6 +18,7 @@ import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -29,7 +30,6 @@ import com.dosecdesign.environodeviewer.Utitilies.DeviceMemoryUtils;
 import com.dosecdesign.environodeviewer.Utitilies.HttpUtils;
 import com.dosecdesign.environodeviewer.Utitilies.StringUtils;
 import com.dosecdesign.environodeviewer.Utitilies.TimeUtils;
-import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -69,6 +69,9 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     private ImageView mEndDateBtn;
     private ImageView mStartTimeBtn;
     private ImageView mEndTimeBtn;
+
+    private TextView mStartRes;
+    private TextView mEndRes;
 
     private int mDay, mMonth, mYear, mHour, mMin;
 
@@ -129,6 +132,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mStartTimeBtn = (ImageView) findViewById(R.id.startTimeBtn);
         mEndDateBtn = (ImageView) findViewById(R.id.endDateBtn);
         mEndTimeBtn = (ImageView) findViewById(R.id.endTimeBtn);
+        mStartRes = (TextView)findViewById(R.id.startResult);
+        mEndRes  = (TextView)findViewById(R.id.endResult);
 
         sitesJson = new JsonModel();
 
@@ -167,13 +172,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mEndDateStamp="";
         mStartYear = mStartMonth = mStartDay = mEndYear = mEndMonth = mEndDay =
                 mStartHour = mStartMin = mEndHour = mEndMin = 0;
-
-        // 16 int array is to set certain actions within this activity
-        // Initialise all to false
-        mActionReg = new Boolean[16];
-        for (int i =0;i<mActionReg.length; i++){
-            mActionReg[i]=false;
-        }
+        initialiseActionRegister();
 
 
         if (mCachedResponse != null) {
@@ -206,6 +205,15 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
     }
 
+    private void initialiseActionRegister() {
+        // 16 int array is to set certain actions within this activity
+        // Initialise all to false
+        mActionReg = new Boolean[16];
+        for (int i =0;i<mActionReg.length; i++){
+            mActionReg[i]=false;
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -236,6 +244,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        // User has selected start date, set reg bit
+                        mActionReg[1]=true;
                         mStartYear = year;
                         mStartMonth = monthOfYear;
                         mStartDay = dayOfMonth;
@@ -250,6 +260,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                         }
                         mStartDate = year + "-" + monthString + "-" + dayString;
                         Log.d(Constants.DEBUG_TAG, "selected start date set to: " + mStartDate);
+                        setDateResult();
                     }
                 }
                         , mYear, mMonth, mDay);
@@ -265,6 +276,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        // User has selected start time, set reg bit
+                        mActionReg[2]=true;
                         mStartHour = hourOfDay;
                         mStartMin = minute;
                         String hourString = String.valueOf(hourOfDay);
@@ -277,6 +290,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                         }
                         mStartTime = hourString + ":" + minString + ":" + "00";
                         Log.d(Constants.DEBUG_TAG, "start time selected: " + mStartTime);
+                        setDateResult();
 
                     }
                 }, mHour, mMin, false);
@@ -294,6 +308,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        // User has selected end date, set reg bit
+                        mActionReg[3]=true;
                         mEndYear = year;
                         mEndMonth = monthOfYear;
                         mEndDay = dayOfMonth;
@@ -308,6 +324,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                         }
                         mEndDate = year + "-" + monthString + "-" + dayString;
                         Log.d(Constants.DEBUG_TAG, "selected end date set to: " + mEndDate);
+                        setDateResult();
+
                     }
                 }
                         , mYear, mMonth, mDay);
@@ -323,6 +341,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        // User has selected end time, set reg bit
+                        mActionReg[4]=true;
                         mEndHour = hourOfDay;
                         mEndMin = minute;
                         // Format values for use in http request
@@ -336,6 +356,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                         }
                         mEndTime = hourString + ":" + minString + ":" + "00";
                         Log.d(Constants.DEBUG_TAG, "end time selected: " + mEndTime);
+                        setDateResult();
+
                     }
                 }, mHour, mMin, false);
                 timePickerDialog.show();
@@ -347,15 +369,19 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                     try {
                         // Build the channel string from user selected channels
                         String channelsString = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
-                        String completeUrl = mQuery.concat(channelsString);
-                        String startDateTime = "";
-                        String endDateTime = "";
+
+                        String urlWithChannels = mQuery.concat(channelsString);
+                        String startDateTime;
+                        String endDateTime;
 
                         // Check bits of action register
                         if(mActionReg[0]) {
                             // User has entered custom dates, create timestamp strings
                             startDateTime = mStartDate + " " + mStartTime;
                             endDateTime = mEndDate + " " + mEndTime;
+
+                            // Clear the status flag in actionReg
+                            mActionReg[0]=false;
 
                             Log.d(Constants.DEBUG_TAG, "start :" + startDateTime);
                             Log.d(Constants.DEBUG_TAG, "end :" + endDateTime);
@@ -379,7 +405,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                                 // Encode the datestamp and create a URL for http request
                                 timestamp = Uri.encode(timestamp, "=,&:?()%");
-                                String apiQuery = completeUrl.concat(timestamp);
+                                String apiQuery = urlWithChannels.concat(timestamp);
                                 URL url = new URL(apiQuery);
                                 mDataRequestFlag = true;
                                 new RetrieveJsonDataTask().execute(url);
@@ -517,17 +543,45 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 } else if (mDataRequestFlag) {
                     mDataRequestFlag = false;
 
-                    // CHeck if the there is data in returned data[]
+                    // Check if the there is data in returned data[]
                     if (checkDataArray(result)) {
 
                         // Data exists, save it to device cache
                         mDevMem.saveToCache(getCacheDir(), mResponse, getBaseContext(), "channels");
 
-                        // Start plotting activity
-                        Intent intent = new Intent(getBaseContext(), DataViewActivity.class);
-                        intent.putExtra(Constants.SELECTED_CHANNELS, mSelectedChannels.size());
-                        intent.putStringArrayListExtra(Constants.SEL_CH_ARRAY, (ArrayList<String>) mSelectedChannels);
-                        startActivity(intent);
+                        try {
+
+                            // Extract each data object's datestamp and save to array for plotting activity
+
+                            JSONObject jObject = new JSONObject(result);
+                            JSONArray dataArray  = jObject.getJSONArray("data");
+                            Log.d(Constants.DEBUG_TAG, "dataArray length: "+dataArray.length());
+                            String[] dateList = new String[dataArray.length()];
+
+                            for (int i=0;i<dataArray.length();i++){
+                                JSONObject dataObj = dataArray.getJSONObject(i);
+                                dateList[i]=dataObj.getString("DateAndTime");
+                            }
+                            Log.d(Constants.DEBUG_TAG, "dateList length :"+dateList.length);
+
+                            // Pass data to and start plotting activity
+                            Intent intent = new Intent(getBaseContext(), DataViewActivity.class);
+                            intent.putExtra(Constants.SELECTED_CHANNELS, mSelectedChannels.size());
+                            intent.putStringArrayListExtra(Constants.SEL_CH_ARRAY, (ArrayList<String>) mSelectedChannels);
+                            Bundle b = new Bundle();
+                            b.putStringArray(Constants.DATESTAMP_ARRAY,dateList);
+                            intent.putExtras(b);
+
+                            // Reset action register before starting next activity
+                            initialiseActionRegister();
+
+                            startActivity(intent);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
                     }
 
                     //TODO makes this into a dialog instead of toast.
@@ -830,13 +884,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             } else {
                 Toast.makeText(getApplicationContext(), R.string.no_sites, Toast.LENGTH_SHORT).show();
             }
-            mQuery = mQuery.concat("/?channels=");
-
-            //
-
-
-            //Log.d(Constants.DEBUG_TAG, "selected channel count is "+ mSelectedChannels.size());
-
+            // Append paths to the query string: channels and DateAndTime will always be in query url
+            mQuery = mQuery.concat("/?channels=DateAndTime,");
         }
     }
 
@@ -866,6 +915,16 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         ViewGroup.LayoutParams params = listView.getLayoutParams();
         params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
         listView.setLayoutParams(params);
+    }
+
+    public void setDateResult(){
+        if(mActionReg[1] && mActionReg[2] && mActionReg[3] && mActionReg[4]){
+            String startDateTime = mStartDate + " " + mStartTime;
+            String endDateTime = mEndDate + " " + mEndTime;
+            mStartRes.setText(startDateTime);
+            mEndRes.setText(endDateTime);
+        }
+
     }
 
 }

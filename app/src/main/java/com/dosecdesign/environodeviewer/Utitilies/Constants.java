@@ -60,5 +60,6 @@ public class Constants {
     // Intent constants
     public static final String SELECTED_CHANNELS = "selected_channels";
     public static final String SEL_CH_ARRAY = "selected_channels_array";
+    public static final String DATESTAMP_ARRAY = "query_datestamp_array";
     public static final String STRING_RESULT = "query_result";
 }

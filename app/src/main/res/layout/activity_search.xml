@@ -22,7 +22,8 @@
                 android:layout_height="wrap_content"
                 android:gravity=""
                 android:text="@string/select_a_site"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:background="@drawable/shapes"/>
 
             <ListView
                 android:id="@+id/siteLv"
@@ -30,16 +31,21 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:divider="@null"
-
+                android:background="@drawable/shapes"
 
 
                 />
 
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0.25"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/select_a_hub"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:background="@drawable/shapes"/>
 
             <ListView
 
@@ -48,6 +54,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="2"
                 android:divider="@null"
+                android:background="@drawable/shapes"
 
 
                 />
@@ -61,7 +68,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/select_an_instrument"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:background="@drawable/shapes"
+                android:id="@+id/textView" />
 
             <ListView
                 android:id="@+id/instrumentLv"
@@ -69,6 +78,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="2"
                 android:divider="@null"
+                android:background="@drawable/shapes"
 
                 />
 
@@ -81,14 +91,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/select_channel_s"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:background="@drawable/shapes"/>
 
             <ListView
                 android:id="@+id/channelsLv"
                 android:layout_width="match_parent"
-                android:layout_height="250dp"
-
+                android:layout_height="0dp"
+                android:layout_weight="3"
                 android:divider="@null"
+                android:background="@drawable/shapes"
 
                 />
 
@@ -107,13 +119,15 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Select Date and TIme Range:"
-                android:textStyle="bold" />
+                android:text="@string/select_date_and_time_range"
+                android:textStyle="bold"
+                android:background="@drawable/shapes"                />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="3"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:background="@drawable/shapes">
 
                 <Button
                     android:layout_width="match_parent"
@@ -121,12 +135,14 @@
                     android:layout_height="0dp"
                     android:id="@+id/last24Btn"
                     android:text="@string/last24"/>
+
                 <Button
                     android:layout_width="match_parent"
                     android:layout_weight="1"
                     android:layout_height="0dp"
                     android:id="@+id/last7DaysBtn"
                     android:text="@string/last_7_days"/>
+
                 <Button
                     android:layout_width="match_parent"
                     android:layout_weight="1"
@@ -143,14 +159,17 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="0.5"/>
+
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:layout_gravity="center"
-                    android:gravity="center"
-                    android:text="OR - select a range below:"
-                    android:textStyle="bold"/>
+                    android:text="@string/or_select_a_range_below"
+                    android:textStyle="bold"
+                    android:background="@drawable/shapes"
+                    android:id="@+id/textView2" />
+
                 <android.support.v4.widget.Space
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
@@ -181,6 +200,13 @@
                         android:layout_height="match_parent"
                         android:layout_weight="2"
                         android:src="@mipmap/time" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2.5"
+                        android:gravity="center_vertical"
+                        android:id="@+id/startResult"
+                         />
 
                 </LinearLayout>
 
@@ -210,6 +236,13 @@
                         android:layout_height="match_parent"
                         android:layout_weight="2"
                         android:src="@mipmap/time" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2.5"
+                        android:gravity="center_vertical"
+                        android:id="@+id/endResult"
+                        />
 
                 </LinearLayout>
 
