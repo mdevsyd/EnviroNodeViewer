@@ -111,6 +111,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     private int mEndHour, mEndMin;
 
     private Boolean[] mActionReg;
+    private Boolean mHttpError;
+    private URL mUrl;
 
 
     @Override
@@ -174,11 +176,19 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 mStartHour = mStartMin = mEndHour = mEndMin = 0;
         initialiseActionRegister();
 
+        // Initialise mURL
+        try {
+            mUrl = new URL("");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 
+
+        mHttpError=false;
         if (mCachedResponse != null) {
             Log.d(Constants.DEBUG_TAG, "GetSiteData(mCachedResponse)");
-            new GetSiteDataTask().execute(mCachedResponse);
-        } else {
+            //new GetSiteDataTask().execute(mCachedResponse);
+        } if (1>0){
             try {
                 String baseUrl = mHttpUtil.buildUrl();
                 URL url = new URL(baseUrl);
@@ -364,6 +374,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 break;
 
             case R.id.goBtn:
+                if(mSelectedChannels.size()>1){
+                    Toast.makeText(SearchActivity.this, "Please select ONE channel only", Toast.LENGTH_SHORT).show();
+                    break;
+                }
                 if (mSelectedChannels.size() != 0) {
                     String res = mHttpUtil.concatUrlQuery(mQuery, "channels", mSelectedChannels);
                     try {
@@ -407,10 +421,14 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                                 timestamp = Uri.encode(timestamp, "=,&:?()%");
                                 String apiQuery = urlWithChannels.concat(timestamp);
                                 URL url = new URL(apiQuery);
+                                mUrl = url;
                                 mDataRequestFlag = true;
                                 new RetrieveJsonDataTask().execute(url);
 
                                 Log.d(Constants.DEBUG_TAG, "Complete URL is : " + apiQuery);
+                                if(mHttpError){
+                                    new RetrieveJsonDataTask().execute(mUrl);
+                                }
 
 
                             } else {
@@ -468,10 +486,12 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
 
     public class RetrieveJsonDataTask extends AsyncTask<URL, String, String> {
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
 
+            mHttpError =false;
 
             if (mChannelSearchFlag) {
                 mDialog.setMessage("Retrieving Channel data for " + mSelectedInstrument);
@@ -595,6 +615,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             } else {
                 Toast.makeText(getApplicationContext(), R.string.http_error, Toast.LENGTH_SHORT).show();
                 mDialog.dismiss();
+                Toast.makeText(SearchActivity.this, "Please wait, re-attempting your request",Toast.LENGTH_SHORT).show();
+                mHttpError =true;
             }
         }
     }
@@ -760,7 +782,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                             JSONObject instObject = mHubsArray.getJSONObject(j);
                             if (instObject != null) {
                                 mInstrumentsArray = instObject.getJSONArray("instruments");
-                                for (int k = 0; j < mInstrumentsArray.length(); k++) {
+                                for (int k = 0; k < mInstrumentsArray.length(); k++) {
                                     JSONObject instrument = mInstrumentsArray.getJSONObject(k);
                                     if (instrument != null) {
                                         String instSerial = instrument.getString("serial");

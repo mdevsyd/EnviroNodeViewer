@@ -35,7 +35,7 @@ public class DeviceMemoryUtils {
             osw.close();
 
             // TODO remove this toast
-            Toast.makeText(context, "Saved file to cache", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(context, "Saved file to cache", Toast.LENGTH_SHORT).show();
             return true;
 
         } catch (FileNotFoundException e) {

@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dosecdesign.environodeviewer.R;
@@ -54,6 +55,8 @@ public class DataViewActivity extends AppCompatActivity {
 
     private DeviceMemoryUtils mDevMem;
 
+    private TextView mPlot1Tv;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +66,8 @@ public class DataViewActivity extends AppCompatActivity {
         mLineChart2 = (LineChart) findViewById(R.id.dataPlot2);
         mLineChart3 = (LineChart) findViewById(R.id.dataPlot3);
         mLineChart4 = (LineChart) findViewById(R.id.dataPlot4);
+
+        mPlot1Tv = (TextView)findViewById(R.id.plot1Tv);
 
         mDevMem = new DeviceMemoryUtils();
 
@@ -126,6 +131,8 @@ public class DataViewActivity extends AppCompatActivity {
 
             for (int i=0; i<numCh; i++){
                 Log.d(Constants.DEBUG_TAG, "channel[i] is: "+chNames.get(i));
+                mPlot1Tv.setText(chNames.get(i));
+
 
                 // TODO maybe try initialising arraylists here
                 mSet = new LineDataSet(null, null);
@@ -207,7 +214,7 @@ public class DataViewActivity extends AppCompatActivity {
     public void createLineChart(LineData data, int chart){
         switch(chart){
             case 1:
-
+                mLineChart1.setPinchZoom(true);
                 mLineChart1.setDescription(null);
                 mLineChart1.animateX(2000);
                 mLineChart1.setData(data);
@@ -250,28 +257,6 @@ public class DataViewActivity extends AppCompatActivity {
 
     }
 
-    public void testChart(){
-        Log.d(Constants.DEBUG_TAG, "In test Chart");
-        final String[] xVals = new String[100];
-        for (int i = 0; i < 100; i++) {
-            xVals[i] = ((i+15) + "mm");
-        }
-
-        IAxisValueFormatter formatter = new IAxisValueFormatter() {
-            @Override
-            public String getFormattedValue(float value, AxisBase axis) {
-                return xVals[(int)value];
-            }
-        };
-
-        XAxis xAxis = mLineChart1.getXAxis();
-        xAxis.setGranularity(1f);
-        xAxis.setValueFormatter(formatter);
-
-
-
-
-    }
 
     public class MyAxisValueFormatter implements IAxisValueFormatter{
 

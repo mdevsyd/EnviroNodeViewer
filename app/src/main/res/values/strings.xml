@@ -61,6 +61,7 @@
     <string name="last_year">Last Year</string>
     <string name="select_date_and_time_range">Select Date and TIme Range:</string>
     <string name="or_select_a_range_below">OR - select a range below:</string>
+    <string name="select_ch">Select Channel:</string>
 
 
 </resources>

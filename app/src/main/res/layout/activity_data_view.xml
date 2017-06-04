@@ -17,6 +17,13 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="10dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/plot1Tv"
+                android:textStyle="bold"
+                android:textSize="28sp"
+                android:gravity="center"/>
 
             <com.github.mikephil.charting.charts.LineChart
 

@@ -23,7 +23,9 @@
                 android:gravity=""
                 android:text="@string/select_a_site"
                 android:textStyle="bold"
-                android:background="@drawable/shapes"/>
+                android:textColor="@color/colorBlack"
+
+               />
 
             <ListView
                 android:id="@+id/siteLv"
@@ -31,7 +33,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:divider="@null"
-                android:background="@drawable/shapes"
+
 
 
                 />
@@ -45,7 +47,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/select_a_hub"
                 android:textStyle="bold"
-                android:background="@drawable/shapes"/>
+                android:textColor="@color/colorBlack"
+                />
 
             <ListView
 
@@ -54,7 +57,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="2"
                 android:divider="@null"
-                android:background="@drawable/shapes"
+
 
 
                 />
@@ -69,7 +72,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/select_an_instrument"
                 android:textStyle="bold"
-                android:background="@drawable/shapes"
+                android:textColor="@color/colorBlack"
                 android:id="@+id/textView" />
 
             <ListView
@@ -78,7 +81,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="2"
                 android:divider="@null"
-                android:background="@drawable/shapes"
+
 
                 />
 
@@ -90,9 +93,10 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/select_channel_s"
+                android:text="@string/select_ch"
                 android:textStyle="bold"
-                android:background="@drawable/shapes"/>
+                android:textColor="@color/colorBlack"
+                />
 
             <ListView
                 android:id="@+id/channelsLv"
@@ -100,7 +104,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="3"
                 android:divider="@null"
-                android:background="@drawable/shapes"
+
 
                 />
 
@@ -109,7 +113,7 @@
                 style="@style/Widget.AppCompat.Button.Colored"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Clear Selected Channels" />
+                android:text="Clear Selected Channel" />
 
             <Space
                 android:layout_width="match_parent"
@@ -121,13 +125,14 @@
                 android:layout_height="wrap_content"
                 android:text="@string/select_date_and_time_range"
                 android:textStyle="bold"
-                android:background="@drawable/shapes"                />
+                android:textColor="@color/colorBlack"
+                             />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="3"
                 android:orientation="vertical"
-                android:background="@drawable/shapes">
+                >
 
                 <Button
                     android:layout_width="match_parent"
@@ -167,7 +172,7 @@
                     android:layout_gravity="center"
                     android:text="@string/or_select_a_range_below"
                     android:textStyle="bold"
-                    android:background="@drawable/shapes"
+                    android:textColor="@color/colorBlack"
                     android:id="@+id/textView2" />
 
                 <android.support.v4.widget.Space
@@ -185,7 +190,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1.5"
                         android:gravity="center_vertical"
-                        android:text="Start" />
+                        android:text="Start"
+                        android:textColor="@color/colorBlack"
+                        />
 
                     <ImageView
                         android:id="@+id/startDateBtn"
@@ -221,7 +228,8 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1.5"
                         android:gravity="center_vertical"
-                        android:text="End" />
+                        android:text="End"
+                        android:textColor="@color/colorBlack"/>
 
                     <ImageView
                         android:id="@+id/endDateBtn"
@@ -260,7 +268,39 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="end"
                 android:text="@string/go" />
+
+
+
+            <android.support.v4.widget.Space
+                android:layout_width="wrap_content"
+                android:layout_height="30dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="end"
+                android:gravity="bottom">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/environode_logo"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="EnviroNode"
+                    android:textStyle="bold"
+                    android:textSize="26sp"
+                    android:layout_gravity="center_horizontal"
+                    />
+
+
+
+            </LinearLayout>
         </LinearLayout>
+
 
 
 
