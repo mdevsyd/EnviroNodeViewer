@@ -1,5 +1,7 @@
 package com.dosecdesign.environodeviewer.Utitilies;
 
+import android.Manifest;
+
 import java.util.UUID;
 
 /**
@@ -62,4 +64,8 @@ public class Constants {
     public static final String SEL_CH_ARRAY = "selected_channels_array";
     public static final String DATESTAMP_ARRAY = "query_datestamp_array";
     public static final String STRING_RESULT = "query_result";
+
+    // Permission Constants
+    public static final int REQUEST_CODE_ASK_BT_PERMISSIONS = 999;
+    public static String[] PERMISSIONS_BLUETOOTH = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
 }

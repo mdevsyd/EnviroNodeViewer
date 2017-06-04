@@ -62,6 +62,24 @@
     <string name="select_date_and_time_range">Select Date and TIme Range:</string>
     <string name="or_select_a_range_below">OR - select a range below:</string>
     <string name="select_ch">Select Channel:</string>
+    <string name="aml_serial">AML Serial Number:</string>
+    <string name="dashboardTv">Instrument Dashboard</string>
+    <string name="latest_upload_tv">Latest Upload:</string>
+    <string name="title_activity_btaml_dashboard">BTAmlDashboardActivity</string>
+    <string name="battery_temperature_deg_c">Battery Temperature (Deg. C)</string>
+    <string name="_0_0v">0.0V</string>
+    <string name="_0">0</string>
+    <string name="date">date...</string>
+    <string name="latest_upload">Latest Upload:</string>
+    <string name="batt_data_error">Error fetching battery data, trying again..</string>
+    <string name="ext_data_error">Error fetching external supply data, trying again..</string>
+    <string name="f0000000">F0000000</string>
+    <string name="unit_name">Unit Name</string>
+    <string name="set_unit_name">Unit Name:</string>
+    <string name="set_unit_comment">Unit Comment:</string>
+    <string name="unit_comment">Unit Comment</string>
+    <string name="dashes">--</string>
+    <string name="live_dialogue_titile">Action required</string>
 
 
 </resources>

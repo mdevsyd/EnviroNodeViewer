@@ -115,7 +115,8 @@ public class SplashActivity extends AppCompatActivity {
                 // Close splash screen and start application
 
             }
-            Intent startAppIntent = new Intent(SplashActivity.this, SearchActivity.class);
+            Intent startAppIntent = new Intent(SplashActivity.this, OptionSelectActivity.class);
+            //Intent startAppIntent = new Intent(SplashActivity.this, SearchActivity.class);
             //startAppIntent.putExtra(result, Constants.STRING_RESULT);
             startActivity(startAppIntent);
             finish();
