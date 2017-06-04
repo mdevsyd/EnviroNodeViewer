@@ -599,6 +599,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                         } catch (JSONException e) {
                             e.printStackTrace();
+                        }catch (RuntimeException e){
+                            e.printStackTrace();
                         }
 
 
