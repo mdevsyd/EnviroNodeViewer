@@ -68,4 +68,9 @@ public class Constants {
     // Permission Constants
     public static final int REQUEST_CODE_ASK_BT_PERMISSIONS = 999;
     public static String[] PERMISSIONS_BLUETOOTH = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+
+
+    // Live Data Constants
+    public static final String LIVE_DATA_TYPE = "live_data_type";
+
 }

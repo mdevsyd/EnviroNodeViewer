@@ -23,10 +23,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dosecdesign.environodeviewer.Model.RealTimeDataRequest;
 import com.dosecdesign.environodeviewer.R;
 import com.dosecdesign.environodeviewer.Services.BtLoggerSPPService;
 import com.dosecdesign.environodeviewer.Utitilies.Constants;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -40,6 +43,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
 
     private BluetoothAdapter mBluetoothAdapter = null;
     private String mConnectedDeviceAddress = null;
+    private String mLiveDataType;
 
     private BtLoggerSPPService mBTLoggerSPPService = null;
 
@@ -55,6 +59,8 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
     private Handler mSecHandler, mBatteryHandler;
     private Timer mBattTimer, mCommentTimer, mExternalTimer, mSerialTimer, mNameTimer ;
     private TimerTask mExternalTimerTask, mCommentTimerTask, mSerialTimerTask, mNameTimerTask;
+
+    private RealTimeDataRequest mReq;
 
 
     @Override
@@ -82,6 +88,8 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mTestBtn = (Button) findViewById(R.id.testBtn);
         mTestBtn.setOnClickListener(this);
 
+        mLiveDataType = "";
+
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         // If the adapter is null, then Bluetooth is not supported
@@ -99,7 +107,10 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mConnectedDeviceAddress = commsIntent.getStringExtra(Constants.EXTRA_DEVICE_ADDRESS);
         //mConnectedDeviceName = commsIntent.getStringExtra(Constants.EXTRA_DEVICE_NAME);
 
+        mReq = new RealTimeDataRequest(mBTLoggerSPPService);
         updateBtDashboard();
+
+
 
     }
 
@@ -203,11 +214,11 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                     //byte[] battVolt = Arrays.copyOfRange(readBuffer,3,7);
                     String readMeassege = new String(readBuffer);
 
-                    Log.d(Constants.DEBUG_TAG, "MESSAGE_READ, AML response is: " + readMeassege);
+                    //Log.d(Constants.DEBUG_TAG, "MESSAGE_READ, AML response is: " + readMeassege);
 
                     byte[] command = Arrays.copyOfRange(readBuffer, 0, 3);
                     String commandStr = new String(command);
-                    Log.d(Constants.DEBUG_TAG, "command is: " + commandStr);
+                    //Log.d(Constants.DEBUG_TAG, "command is: " + commandStr);
                     switch (commandStr) {
 
                         // sf7 --> overall unit comment
@@ -224,7 +235,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
 
                         // al2 --> 8 bytes = overall unit serial number
                         case "al2":
-                            String serial = new String(Arrays.copyOfRange(readBuffer, 0, 9));
+                            String serial = new String(Arrays.copyOfRange(readBuffer, 3, 11));
                             mSerialTv.setText(serial);
                             break;
 
@@ -256,7 +267,13 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                             }
                             break;
                         case "rb9":
-                            Log.d(Constants.DEBUG_TAG,"rb9 response: "+readMeassege);
+                            byte[] chan1 = Arrays.copyOfRange(readBuffer,11,11+4);
+                            byte[] chan2 = Arrays.copyOfRange(readBuffer,11+8,11+8+4);
+
+                            float chan1float = ByteBuffer.wrap(chan1).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                            float chan2float = ByteBuffer.wrap(chan2).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                            Log.d(Constants.DEBUG_TAG,"flaot 1 and 2 "+String.valueOf(chan1float)+" "+String.valueOf(chan2float));
+
                             break;
                     }
                     break;
@@ -278,13 +295,13 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         } else if (mBTLoggerSPPService == null) {
             mBTLoggerSPPService = new BtLoggerSPPService(this, mHandler);
         }
-        cancelActiveTimers();
+        mReq.cancelActiveTimers();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        cancelActiveTimers();
+        mReq.cancelActiveTimers();
         if (mBTLoggerSPPService != null) {
             mBTLoggerSPPService.stop();
         }
@@ -293,20 +310,20 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
     @Override
     protected void onPause() {
         super.onPause();
-        cancelActiveTimers();
+        mReq.cancelActiveTimers();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        cancelActiveTimers();
+        mReq.cancelActiveTimers();
 
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        cancelActiveTimers();
+        mReq.cancelActiveTimers();
 
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
@@ -350,15 +367,24 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.testBtn:
+                Log.d(Constants.DEBUG_TAG, "hfjg");
                 // First check the SPP service is still active
                 if (mBTLoggerSPPService.getState() != BtLoggerSPPService.STATE_CONNECTED) {
                     Toast.makeText(this, R.string.not_connected, Toast.LENGTH_LONG).show();
                     return;
                 } else {
                     // SPP service is active, get live data
-
-                    byte[] battVMsg = "RB11,0,0,0".getBytes();
-                    // getLiveData(battVMsg);
+                    byte[] channelMsg = new byte[7];
+                    channelMsg[0] = 'R';
+                    channelMsg[1] = 'B';
+                    channelMsg[2] = '1';
+                    // now channel info...
+                    channelMsg[3] = 0; // channelIndex; // starting channel number
+                    channelMsg[4] = 0;
+                    channelMsg[5] = 0;
+                    channelMsg[6] = 0;
+                    mReq.requestLiveChannelData(channelMsg);
+                    //getLiveChannelData(channelMsg);
                     break;
                 }
 
@@ -370,7 +396,8 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
             // they will be prompted if they'd like to go into live mode.
             case (R.id.battIv):
                 Log.d(Constants.DEBUG_TAG, "clicked on :"+v.getId());
-                showCustomDialog("battery voltage");
+                mLiveDataType = "battery voltage";
+                showCustomDialog(mLiveDataType);
                 break;
         }
 
@@ -384,7 +411,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         // Get the layout inflater
         LayoutInflater inflater = this.getLayoutInflater();
-        builder.setTitle(R.string.live_dialogue_titile);
+        builder.setTitle(R.string.live_dialogue_title);
         builder.setMessage("Would you like to view live "+type+ " data now?");
 
         builder.setPositiveButton(R.string.go, new DialogInterface.OnClickListener() {
@@ -393,8 +420,10 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
 
                 // Create an intent to start the api activity when user hits "GO". Send mKey in intent.
                 Intent liveIntent = new Intent(BluetoothAmlDataActivity.this, LiveChartActivity.class);
+                liveIntent.putExtra(Constants.LIVE_DATA_TYPE, mLiveDataType);
+                liveIntent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, mConnectedDeviceAddress);
                 startActivity(liveIntent);
-                cancelActiveTimers();
+                mReq.cancelActiveTimers();
 
 
             }
@@ -410,183 +439,18 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
     }
 
     /**
-     * Cancels any active timers and timerTasks, so as to eliminate
-     * possibility of running processes when they are not needed.
-     */
-    private void cancelActiveTimers() {
-        if (mBatteryTask != null) {
-            mBattTimer.cancel();
-            mBattTimer.purge();
-            mBatteryTask.cancel();
-        }
-        if(mCommentTimerTask !=null){
-            mCommentTimer.cancel();
-            mCommentTimer.purge();
-            mCommentTimerTask.cancel();
-        }
-        if(mExternalTimerTask !=null){
-            mExternalTimer.cancel();
-            mExternalTimer.purge();
-            mExternalTimerTask.cancel();
-        }
-        if(mSerialTimerTask !=null){
-            mSerialTimer.cancel();
-            mSerialTimer.purge();
-            mSerialTimerTask.cancel();
-        }
-        if(mNameTimerTask !=null){
-            mNameTimer.cancel();
-            mNameTimer.purge();
-            mNameTimerTask.cancel();
-        }
-    }
-
-    private void getLiveData(final byte[] msg) {
-        mSecHandler = new Handler();
-        mBattTimer = new Timer();
-
-        mBatteryTask = new TimerTask() {
-            @Override
-            public void run() {
-                mSecHandler.post(new Runnable() {
-                    public void run() {
-                        mBTLoggerSPPService.write(msg);
-                        // mBTLoggerSPPService.write("AW0");
-
-                    }
-                });
-            }
-        };
-
-        mBattTimer.schedule(mBatteryTask, 500, 1000);
-    }
-
-    /**
-     * Method to update AML Dashboard widgets over Bluetooth.
-     * Requests are written to the CC2564 TaskTimer schedules.
+     * Method to update AML Dashboard widgets over Bluetooth classic.
+     * Requests are made using the RealTimeDataRequest object.
+     * Responses are handled by mHandler.
      */
     public void updateBtDashboard() {
 
-        requestBattDetails();
-        requestExternalSupply();
-        requestSerialNumber();
-        requestUnitName();
-        requestUnitComment();
-
+        mReq.requestBattDetails();
+        mReq.requestExternalSupply();
+        mReq.requestSerialNumber();
+        mReq.requestUnitComment();
+        mReq.requestUnitName();
     }
-
-    /**
-     * Request the overall unit name set by user after 1 second delay.
-     */
-    private void requestUnitName() {
-        final Handler nameHandler = new Handler();
-        mNameTimer = new Timer();
-        mNameTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                nameHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mBTLoggerSPPService.write("SF0".getBytes());
-                    }
-                });
-            }
-        };
-        mNameTimer.schedule(mNameTimerTask, 1000, 1000);
-    }
-
-    /**
-     * Request the overall unit comment set by user after 1.05 sec delay.
-     */
-    private void requestUnitComment() {
-
-        final Handler commentHandler = new Handler();
-        mCommentTimer = new Timer();
-        mCommentTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                commentHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mBTLoggerSPPService.write("SD0".getBytes());
-                    }
-                });
-            }
-        };
-        mCommentTimer.schedule(mCommentTimerTask, 1050, 1000);
-    }
-
-    /**
-     * Request serial number from CC2564 after 1.1 second delay.
-     */
-    private void requestSerialNumber() {
-        final Handler serialHandler = new Handler();
-        mSerialTimer = new Timer();
-        mSerialTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                serialHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mBTLoggerSPPService.write("AL0".getBytes());
-                    }
-                });
-            }
-        };
-        mSerialTimer.schedule(mSerialTimerTask, 1100, 1000);
-    }
-
-    /**
-     * Request external supply details from CC2564 after 600ms delay
-     * once every 5 seconds.
-     */
-    private void requestExternalSupply() {
-        final Handler extHandler = new Handler();
-        mExternalTimer = new Timer();
-        mExternalTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                extHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Request external supply voltage
-                        mBTLoggerSPPService.write("AY0".getBytes());
-                    }
-                });
-            }
-        };
-        mExternalTimer.schedule(mExternalTimerTask, 600, 5000);
-    }
-
-    /**
-     * Request battery voltage and temperature form CC2564 after 500ms delay
-     * once every 5 seconds.
-     */
-    private void requestBattDetails() {
-        mBatteryHandler = new Handler();
-        mBattTimer = new Timer();
-        mBatteryTask = new TimerTask() {
-            @Override
-            public void run() {
-                mBatteryHandler.post(new Runnable() {
-                    public void run() {
-                        // Here we wish to update each widget's values once every 5 secs
-                        // Request batt voltage and batt temperature
-                        mBTLoggerSPPService.write("AW0".getBytes());
-
-                        // Request external supply voltage
-                        //mBTLoggerSPPService.write("AY0".getBytes());
-                    }
-                });
-            }
-        };
-
-        mBattTimer.schedule(mBatteryTask, 500, 5000);
-    }
-
-    /**
-     *
-     */
 
 
 }
