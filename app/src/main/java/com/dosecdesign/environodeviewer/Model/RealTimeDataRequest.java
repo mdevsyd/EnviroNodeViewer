@@ -88,7 +88,7 @@ public class RealTimeDataRequest {
 
     /**
      * Request external supply details from CC2564 after 600ms delay
-     * once every 5 seconds.
+     * once a second.
      */
     public void requestExternalSupply() {
         mExtHandler = new Handler();
@@ -105,12 +105,12 @@ public class RealTimeDataRequest {
                 });
             }
         };
-        mExternalTimer.schedule(mExternalTimerTask, 600, 5000);
+        mExternalTimer.schedule(mExternalTimerTask, 600, 1000);
     }
 
     /**
      * Request battery voltage and temperature form CC2564 after 500ms delay
-     * once every 5 seconds.
+     * once a second.
      */
     public void requestBattDetails() {
         mBattHandler = new Handler();
@@ -129,7 +129,7 @@ public class RealTimeDataRequest {
             }
         };
 
-        mBattTimer.schedule(mBattTimerTask, 500, 5000);
+        mBattTimer.schedule(mBattTimerTask, 500, 1000);
     }
 
     /**

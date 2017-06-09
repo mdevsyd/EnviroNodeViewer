@@ -81,6 +81,7 @@
     <string name="dashes">--</string>
     <string name="live_dialogue_title">Go into live mode?</string>
     <string name="battery_v">Battery Voltage</string>
+    <string name="channel_name">Channel Name</string>
 
 
 </resources>
