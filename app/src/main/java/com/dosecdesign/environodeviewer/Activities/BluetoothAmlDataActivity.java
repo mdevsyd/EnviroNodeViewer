@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +29,17 @@ import com.dosecdesign.environodeviewer.Model.RealTimeDataRequest;
 import com.dosecdesign.environodeviewer.R;
 import com.dosecdesign.environodeviewer.Services.BtLoggerSPPService;
 import com.dosecdesign.environodeviewer.Utitilies.Constants;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
+import org.w3c.dom.Text;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -50,17 +63,23 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
     //String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
 
-    private TextView mBattVTv, mBattTempTv, mSuppVTv, mSerialTv, mCommentTv, mNameTv;
-    private ImageView mBattVIv, mTempIv, mSuppIv;
+    private TextView mBattVTv, mBattTempTv, mSuppVTv, mSerialTv, mCommentTv, mNameTv, mIntTempTv, mIntPressureTv, mExtCurrentTv, mLivePlotTv;
+    private ImageView mBattVIv, mTempIv, mExtSuppVoltIv, mIntTempIv, mIntPressureIv, mExtCurrentIv;
 
-    private Button mTestBtn;
+    private Button mTestBtn, mTestBtn2;
     private ImageButton mRefreshBtn;
     private TimerTask mBatteryTask;
     private Handler mSecHandler, mBatteryHandler;
-    private Timer mBattTimer, mCommentTimer, mExternalTimer, mSerialTimer, mNameTimer ;
+    private Timer mBattTimer, mCommentTimer, mExternalTimer, mSerialTimer, mNameTimer;
     private TimerTask mExternalTimerTask, mCommentTimerTask, mSerialTimerTask, mNameTimerTask;
 
     private RealTimeDataRequest mReq;
+
+    private LinearLayout mChartLayout, mWidgetsLayout;
+
+    private LineChart mChart;
+    private Boolean mLive = false, test = false;
+    private byte[] mLiveReg;
 
 
     @Override
@@ -74,22 +93,42 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mSerialTv = (TextView) findViewById(R.id.amlSerialTv);
         mCommentTv = (TextView) findViewById(R.id.unitCommentTv);
         mNameTv = (TextView) findViewById(R.id.unitNameTv);
+        mIntTempTv = (TextView) findViewById(R.id.internalTempTv);
+        mIntPressureTv = (TextView) findViewById(R.id.internalPressureTv);
+        mExtCurrentTv = (TextView) findViewById(R.id.supplyCurrentTv);
+        mLivePlotTv = (TextView) findViewById(R.id.livePlotTv);
+
 
         mBattVIv = (ImageView) findViewById(R.id.battIv);
         mBattVIv.setOnClickListener(this);
         mTempIv = (ImageView) findViewById(R.id.battTempIv);
         mTempIv.setOnClickListener(this);
-        mSuppIv = (ImageView) findViewById(R.id.solarIv);
-        mSuppIv.setOnClickListener(this);
-
+        mExtSuppVoltIv = (ImageView) findViewById(R.id.solarIv);
+        mExtSuppVoltIv.setOnClickListener(this);
+        mIntTempIv = (ImageView) findViewById(R.id.internalTempIv);
+        mIntTempIv.setOnClickListener(this);
+        mIntPressureIv = (ImageView) findViewById(R.id.internalPressureIv);
+        mIntPressureIv.setOnClickListener(this);
+        mExtCurrentIv = (ImageView) findViewById(R.id.supplyCurrentIv);
+        mExtCurrentIv.setOnClickListener(this);
 
         mRefreshBtn = (ImageButton) findViewById(R.id.refreshBtn);
         mRefreshBtn.setOnClickListener(this);
         mTestBtn = (Button) findViewById(R.id.testBtn);
         mTestBtn.setOnClickListener(this);
 
-        mLiveDataType = "";
+        mTestBtn2 = (Button) findViewById(R.id.testBtn2);
+        mTestBtn2.setOnClickListener(this);
 
+        mLiveDataType = "";
+        mLiveReg = new byte[8];
+
+        mWidgetsLayout = (LinearLayout) findViewById(R.id.widgetArea);
+
+        mChartLayout = (LinearLayout) findViewById(R.id.liveChartLayout);
+        mChartLayout.setVisibility(View.GONE);
+
+        mChart = (LineChart) findViewById(R.id.liveDataPlot);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         // If the adapter is null, then Bluetooth is not supported
@@ -109,7 +148,6 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
 
         mReq = new RealTimeDataRequest(mBTLoggerSPPService);
         updateBtDashboard();
-
 
 
     }
@@ -208,7 +246,11 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                     break;
                 case Constants.MESSAGE_WRITE:
                     byte[] writeBuffer = (byte[]) msg.obj;
+                    //Log.d(Constants.DEBUG_TAG, "wrote: "+writeBuffer);
                     break;
+
+                // We are reading a returned message from the CC2564
+
                 case Constants.MESSAGE_READ:
                     byte[] readBuffer = (byte[]) msg.obj;
                     //byte[] battVolt = Arrays.copyOfRange(readBuffer,3,7);
@@ -247,8 +289,24 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                             try {
                                 float battVolts = Float.valueOf(battV) / 1000;
                                 float battTemp = Float.valueOf(battT) / 10;
-                                mBattVTv.setText(String.valueOf(battVolts));
-                                mBattTempTv.setText(String.valueOf(battTemp));
+                                // Check if we are in live or dashboard mode
+                                // We are in dashboard mode
+                                if (!mLive) {
+                                    //Log.d(Constants.DEBUG_TAG, "batt volts dash : "+battVolts);
+                                    mBattVTv.setText(String.valueOf(battVolts));
+                                    mBattTempTv.setText(String.valueOf(battTemp));
+                                }
+                                // We are in live mode
+                                else if (mLive) {
+                                    //Log.d(Constants.DEBUG_TAG, "batt volts LIVE : "+battVolts);
+                                    // We will be receiving data once per second, add a chart entry each time we receive data
+                                    addChartEntry(battVolts);
+                                }
+                                if (test) {
+                                    Log.d(Constants.DEBUG_TAG, "SINGLE BATT VOLTS : " + battVolts);
+                                    test = false;
+                                }
+
                             } catch (NumberFormatException e) {
                                 e.printStackTrace();
                                 Toast.makeText(BluetoothAmlDataActivity.this, R.string.batt_data_error, Toast.LENGTH_SHORT).show();
@@ -267,13 +325,26 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                             }
                             break;
                         case "rb9":
-                            byte[] chan1 = Arrays.copyOfRange(readBuffer,11,11+4);
-                            byte[] chan2 = Arrays.copyOfRange(readBuffer,11+8,11+8+4);
+                            byte[] chan1 = Arrays.copyOfRange(readBuffer, 11, 11 + 4);
+                            byte[] chan2 = Arrays.copyOfRange(readBuffer, 11 + 8, 11 + 8 + 4);
 
                             float chan1float = ByteBuffer.wrap(chan1).order(ByteOrder.LITTLE_ENDIAN).getFloat();
                             float chan2float = ByteBuffer.wrap(chan2).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-                            Log.d(Constants.DEBUG_TAG,"flaot 1 and 2 "+String.valueOf(chan1float)+" "+String.valueOf(chan2float));
+                            Log.d(Constants.DEBUG_TAG, "flaot 1 and 2 " + String.valueOf(chan1float) + " " + String.valueOf(chan2float));
 
+                            if (mLiveReg[0]==0) {
+                                mIntPressureTv.setText(String.valueOf(chan1float));
+                                mIntTempTv.setText(String.valueOf(chan2float));
+                            } else if (mLiveReg[0]==1) {
+                                mLivePlotTv.setText(mLiveDataType);
+                                if (mLiveReg[4]==1){
+                                    addChartEntry(chan1float);
+                                }
+                                else if(mLiveReg[5]==1){
+                                    addChartEntry(chan2float);
+                                }
+
+                            }
                             break;
                     }
                     break;
@@ -305,6 +376,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         if (mBTLoggerSPPService != null) {
             mBTLoggerSPPService.stop();
         }
+        mLive = false;
     }
 
     @Override
@@ -365,9 +437,11 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
 
     @Override
     public void onClick(View v) {
+
         switch (v.getId()) {
             case R.id.testBtn:
-                Log.d(Constants.DEBUG_TAG, "hfjg");
+                hideWidgetArea();
+                /*Log.d(Constants.DEBUG_TAG, "hfjg");
                 // First check the SPP service is still active
                 if (mBTLoggerSPPService.getState() != BtLoggerSPPService.STATE_CONNECTED) {
                     Toast.makeText(this, R.string.not_connected, Toast.LENGTH_LONG).show();
@@ -385,22 +459,150 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                     channelMsg[6] = 0;
                     mReq.requestLiveChannelData(channelMsg);
                     //getLiveChannelData(channelMsg);
-                    break;
-                }
+                    break;*/
+                break;
+            case R.id.testBtn2:
+                showWidgetArea();
+                //mReq.getOnceOffBattV();
+                test = true;
+                //mBTLoggerSPPService.write("AW0".getBytes());
+                // SPP service is active, get live data
 
+                break;
             case R.id.refreshBtn:
+                mReq.cancelActiveTimers();
                 updateBtDashboard();
                 break;
-
             // The following case is for when user click on any of the widget images,
             // they will be prompted if they'd like to go into live mode.
             case (R.id.battIv):
-                Log.d(Constants.DEBUG_TAG, "clicked on :"+v.getId());
                 mLiveDataType = "battery voltage";
-                showCustomDialog(mLiveDataType);
+
+                mLiveReg[1] = 1;
+                // Hide widgets and display the graph
+                hideWidgetArea();
                 break;
+            case (R.id.internalTempIv):
+                mLiveReg[5] = 1;
+                mLiveDataType = "Internal Temperature Sensor (Deg. C)";
+                hideWidgetArea();
         }
 
+    }
+
+    private void setupChart() {
+
+        // Customising the chart
+        mChart.setDescription(null);
+        mChart.setNoDataText("Acquiring Data...");
+
+        mChart.setTouchEnabled(true);
+        mChart.setDragEnabled(true);
+        mChart.setScaleEnabled(true);
+        mChart.setPinchZoom(true);
+
+        //Setup the linedata
+        LineData data = new LineData();
+
+        // Add data to the chart
+        mChart.setData(data);
+
+        // Get and customise legend
+        Legend legend = mChart.getLegend();
+        legend.setForm(Legend.LegendForm.LINE);
+        legend.setTextColor(Color.BLUE);
+
+
+        XAxis x = mChart.getXAxis();
+        x.setTextColor(Color.BLUE);
+        x.setDrawGridLines(false);
+        x.setAvoidFirstLastClipping(true);
+
+        YAxis y = mChart.getAxisLeft();
+        y.setTextColor(Color.BLUE);
+        y.setDrawGridLines(true);
+    }
+
+    /**
+     * Method creates a data entry and adds it to DataSet to be plotted in LineChart.
+     * Notifies LineData and chart of changes to the DataSet (once per second).
+     * Refreshes the chart after receiving the latest data.
+     *
+     * @param dataFloat - the float to be plotted.
+     */
+    private void addChartEntry(float dataFloat) {
+
+        // Get reference to the current data on the plot
+        LineData data = mChart.getData();
+
+        // If no data exists, create a data set
+        if (data != null) {
+            ILineDataSet set = data.getDataSetByIndex(0);
+
+            if (set == null) {
+                set = createSet();
+                data.addDataSet(set);
+            }
+
+            // Add an entry to the LineData set and notify of change
+            data.addEntry(new Entry(set.getEntryCount(), dataFloat), 0);
+            data.notifyDataChanged();
+
+            // Notify the chart the data has changed and update chart
+            mChart.notifyDataSetChanged();
+            mChart.invalidate();
+
+            // Setup view size and always stick to latest data result
+            mChart.setVisibleXRangeMaximum(10);
+            mChart.moveViewToX(data.getEntryCount());
+
+        }
+    }
+
+    /**
+     * Method creates a set of data to be plotted and applies visual characteristics
+     * to the line data set.
+     *
+     * @return - the ILineDataSet to be plotted.
+     */
+    private ILineDataSet createSet() {
+        // Create a set of data, set label to the type of data selected by user
+        LineDataSet set = new LineDataSet(null, mLiveDataType);
+
+        // Setup the look of the line data on plot
+        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        set.setCubicIntensity(0.2f);
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+        set.setColor(ColorTemplate.getHoloBlue());
+        set.setCircleColor(ColorTemplate.getHoloBlue());
+        set.setLineWidth(2f);
+        set.setCircleRadius(3f);
+        set.setFillAlpha(65);
+        set.setFillColor(ColorTemplate.getHoloBlue());
+        set.setHighLightColor(Color.RED);
+        set.setValueTextColor(Color.BLUE);
+        set.setValueTextSize(10f);
+
+        return set;
+    }
+
+
+    private void showWidgetArea() {
+        mWidgetsLayout.setVisibility(View.VISIBLE);
+        mChartLayout.setVisibility(View.GONE);
+        // We are exiting live mode, set all bits in livemode register back to zero
+        for (int i = 0; i < mLiveReg.length; i++) {
+            mLiveReg[i]=0;
+        }
+        //mLive=false;
+    }
+
+    private void hideWidgetArea() {
+        // We are going into live mode, set the live mode bit in reg
+        mLiveReg[0]=1;
+        setupChart();
+        mWidgetsLayout.setVisibility(View.GONE);
+        mChartLayout.setVisibility(View.VISIBLE);
     }
 
 
@@ -412,7 +614,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         // Get the layout inflater
         LayoutInflater inflater = this.getLayoutInflater();
         builder.setTitle(R.string.live_dialogue_title);
-        builder.setMessage("Would you like to view live "+type+ " data now?");
+        builder.setMessage("Would you like to view live " + type + " data now?");
 
         builder.setPositiveButton(R.string.go, new DialogInterface.OnClickListener() {
             @Override
@@ -450,7 +652,31 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mReq.requestSerialNumber();
         mReq.requestUnitComment();
         mReq.requestUnitName();
+
+        // Setup the channel request byte[]
+        byte[] channelMsg = new byte[7];
+        channelMsg[0] = 'R';
+        channelMsg[1] = 'B';
+        channelMsg[2] = '1';
+        // now channel info...
+        channelMsg[3] = 0; // channelIndex; // starting channel number
+        channelMsg[4] = 0;
+        channelMsg[5] = 0;
+        channelMsg[6] = 0;
+        mReq.requestLiveChannelData(channelMsg);
     }
 
-
+    @Override
+    public void onBackPressed() {
+        // Check if any of the register bits are set, if so, we were live plotting, so
+        // pressing back should not end the activity
+        for (int i = 0; i < mLiveReg.length; i++) {
+            if (mLiveReg[i] == 1) {
+                showWidgetArea();
+                return;
+            }
+        }
+        // we were not in live mode, end the activity on back press
+        super.onBackPressed();
+    }
 }

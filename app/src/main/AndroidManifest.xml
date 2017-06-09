@@ -27,7 +27,13 @@
         <activity android:name=".Activities.LiveChartActivity" />
         <activity android:name=".Activities.BluetoothAmlDataActivity" />
         <activity android:name=".Activities.DeviceListActivity" />
-        <activity android:name=".Activities.OptionSelectActivity"></activity>
+        <activity android:name=".Activities.OptionSelectActivity" />
+        <activity android:name=".Activities.RealTimeDataActivity"></activity>
+
+        <service android:name=".Services.SPPService"
+            android:exported="false"/>
+        <service android:name=".Services.MyService"
+            android:exported="false"/>
     </application>
 
 </manifest>

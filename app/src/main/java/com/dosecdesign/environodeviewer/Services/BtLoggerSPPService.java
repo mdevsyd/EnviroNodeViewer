@@ -325,7 +325,7 @@ public class BtLoggerSPPService {
 
         public void run() {
 
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[512];
             int bytes;
 
             // Listen to the inputstream while connected
@@ -336,7 +336,6 @@ public class BtLoggerSPPService {
                     bytes = mmInStream.read(buffer);
                     //mDataView.write(buffer, bytes);
 
-                    //TODO this could be incorrect
                     mHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 } catch (IOException e) {
                     Log.e(Constants.DEBUG_TAG, "disconnected", e);

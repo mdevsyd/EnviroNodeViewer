@@ -49,7 +49,7 @@ public class Constants {
     public static final String HTTP_ICT_PATH_3 = "A3JHBLG1ZBYLK63Q";
 
 
-    // Only for testing
+    // API Constante
     public static final String testUrl = "https://api.ictcommunity.org/v0/Accounts/A3JHBLG1ZBYLK63Q/AML1G204/?channels=Battery%20Voltage%20(V),Battery%20Temperature%20(deg.C)&start=2017-03-01%2009:00:00&end=2017-03-01%2009:30:00";
     public static final String amlDashboardUrl = "https://api.ictcommunity.org/v0/Accounts/A3JHBLG1ZBYLK63Q/AML1G204/?channels=DateAndTime,Battery%20Voltage%20(V),Temperature_1%20(deg.C),External%20Supply%20Voltage%20(V)&start=2017-04-11%2009:00:00";
     public static final String extra_string_ict = "/AML1G204/?channels=DateAndTime,Battery%20Voltage%20(V),Temperature_1%20(deg.C),External%20Supply%20Voltage%20(V)&start=2017-04-22%2009:00:00";
@@ -72,5 +72,8 @@ public class Constants {
 
     // Live Data Constants
     public static final String LIVE_DATA_TYPE = "live_data_type";
+
+    // Service Constants
+    public static final String ACTION = "spp_service_action_string";
 
 }
