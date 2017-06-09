@@ -185,5 +185,10 @@ public class RealTimeDataRequest {
             mNameTimer.purge();
             mNameTimerTask.cancel();
         }
+        if(mChTimerTask!=null){
+            mChannelTimer.cancel();
+            mChannelTimer.purge();
+            mChTimerTask.cancel();
+        }
     }
 }
