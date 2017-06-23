@@ -1,13 +1,12 @@
 package com.dosecdesign.environodeviewer.Utitilies;
 
 import android.net.Uri;
-import android.util.Log;
 
-import java.net.URL;
 import java.util.List;
 
 /**
  * Created by Michi on 5/05/2017.
+ * Class for building and concatenating URLs.
  */
 
 public class HttpUtils {
@@ -18,9 +17,9 @@ public class HttpUtils {
         Uri.Builder builder = new Uri.Builder();
         builder.scheme(Constants.HTTP_SCHEME)
                 .authority(Constants.HTTP_AUTHORITY)
-                .appendPath(Constants.HTTP_ICT_PATH_1)
-                .appendPath(Constants.HTTP_ICT_PATH_2)
-                .appendPath(Constants.HTTP_ICT_PATH_3);
+                .appendPath(Constants.HTTP_PATH_1)
+                .appendPath(Constants.HTTP_PATH_2)
+                .appendPath(Constants.HTTP_PATH_3);
 
         return builder.build().toString();
     }
@@ -30,9 +29,9 @@ public class HttpUtils {
         Uri.Builder builder = new Uri.Builder();
         builder.scheme(Constants.HTTP_SCHEME)
                 .authority(Constants.HTTP_AUTHORITY)
-                .appendPath(Constants.HTTP_ICT_PATH_1)
-                .appendPath(Constants.HTTP_ICT_PATH_2)
-                .appendPath(Constants.HTTP_ICT_PATH_3);
+                .appendPath(Constants.HTTP_PATH_1)
+                .appendPath(Constants.HTTP_PATH_2)
+                .appendPath(Constants.HTTP_PATH_3);
         for(String path : paths){
             builder.appendPath(path);
         }
@@ -58,7 +57,7 @@ public class HttpUtils {
         return base.concat(query);
     }
 
-    public String concatUrlQuery(String base, String type, List<String> paths){
+    public String concatUrlPath(String base, String type, List<String> paths){
 
         String baseUrl = base;
         switch (type){

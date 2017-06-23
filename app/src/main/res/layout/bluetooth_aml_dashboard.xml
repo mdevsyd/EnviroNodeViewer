@@ -22,6 +22,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/dashTitleTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
@@ -31,6 +32,29 @@
         <android.support.v4.widget.Space
             android:layout_width="match_parent"
             android:layout_height="16dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/connected_to"
+                android:textSize="26sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/amlSerialTv"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:hint="@string/dashes"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+        </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -77,29 +101,7 @@
                 android:textSize="26sp"
                 android:textStyle="bold" />
         </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:gravity="end"
-                android:text="@string/aml_serial"
-                android:textSize="26sp"
-                android:textStyle="bold"/>
-            <TextView
-                android:id="@+id/amlSerialTv"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:gravity="start"
-                android:hint="@string/dashes"
-                android:textSize="26sp"
-                android:textStyle="bold" />
-        </LinearLayout>
 
 
     </LinearLayout>
@@ -141,12 +143,12 @@
         android:layout_toStartOf="@+id/refreshBtn" />
 
     <Button
-        android:text="Button"
+        android:text="Connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="65dp"
         android:layout_marginEnd="65dp"
-        android:id="@+id/testBtn2"
+        android:id="@+id/connectBtn"
         android:layout_alignParentTop="true"
          />
 
@@ -296,14 +298,14 @@
                     app:srcCompat="@drawable/solar_round" />
 
                 <ImageView
-                    android:id="@+id/internalTempIv"
+                    android:id="@+id/widget5Iv"
                     android:layout_width="0dp"
                     android:layout_height="55dp"
                     android:layout_weight="1"
                     app:srcCompat="@drawable/battery_icon" />
 
                 <ImageView
-                    android:id="@+id/internalPressureIv"
+                    android:id="@+id/widget6Iv"
                     android:layout_width="0dp"
                     android:layout_height="55dp"
                     android:layout_weight="1"
@@ -330,7 +332,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/internalTempEt"
+                    android:id="@+id/widget5Et"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -340,7 +342,7 @@
                     />
 
                 <TextView
-                    android:id="@+id/internalPressureEt"
+                    android:id="@+id/widget6Et"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -364,7 +366,7 @@
                     android:textSize="25sp"
                     android:hint="@string/_0"/>
                 <TextView
-                    android:id="@+id/internalTempTv"
+                    android:id="@+id/widget5Tv"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -373,7 +375,7 @@
                     android:textSize="25sp"
                     android:hint="@string/_0"/>
                 <TextView
-                    android:id="@+id/internalPressureTv"
+                    android:id="@+id/widget6Tv"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

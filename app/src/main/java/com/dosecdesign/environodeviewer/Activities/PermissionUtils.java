@@ -51,7 +51,7 @@ public class PermissionUtils
      * @param request_code
      */
 
-    public void check_permission(ArrayList<String> permissions, String dialog_content, int request_code)
+    public void checkPermission(ArrayList<String> permissions, String dialog_content, int request_code)
     {
         this.permission_list=permissions;
         this.dialog_content=dialog_content;
@@ -153,14 +153,14 @@ public class PermissionUtils
 
                     if(pending_permissions.size()>0)
                     {
-                        showMessageOKCancel(dialog_content,
+                        showMessage(dialog_content,
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
 
                                         switch (which) {
                                             case DialogInterface.BUTTON_POSITIVE:
-                                                check_permission(permission_list,dialog_content,req_code);
+                                                checkPermission(permission_list,dialog_content,req_code);
                                                 break;
                                             case DialogInterface.BUTTON_NEGATIVE:
                                                 Log.i("permisson","not fully given");
@@ -199,7 +199,7 @@ public class PermissionUtils
      * @param message
      * @param okListener
      */
-    private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
+    private void showMessage(String message, DialogInterface.OnClickListener okListener) {
         new AlertDialog.Builder(current_activity)
                 .setMessage(message)
                 .setPositiveButton("Ok", okListener)

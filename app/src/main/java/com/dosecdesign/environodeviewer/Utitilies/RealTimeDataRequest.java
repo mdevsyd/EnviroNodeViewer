@@ -1,8 +1,10 @@
-package com.dosecdesign.environodeviewer.Model;
+package com.dosecdesign.environodeviewer.Utitilies;
 
 import android.os.Handler;
+import android.util.Log;
 
 import com.dosecdesign.environodeviewer.Services.BtLoggerSPPService;
+import com.dosecdesign.environodeviewer.Utitilies.Constants;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,7 +19,7 @@ public class RealTimeDataRequest {
     private BtLoggerSPPService service;
     private Handler mBattHandler, mNameHandler, mCommentHandler, mSerialHandler, mExtHandler, mChannelHandler;
     private Timer mBattTimer, mCommentTimer, mExternalTimer, mSerialTimer, mNameTimer, mChannelTimer ;
-    private TimerTask mExternalTimerTask, mCommentTimerTask, mSerialTimerTask, mNameTimerTask, mBattTimerTask, mChTimerTask;
+    private TimerTask mExternalTimerTask, mCommentTimerTask, mSerialTimerTask, mNameTimerTask, mBattTimerTask=null, mChTimerTask;
 
 
     public RealTimeDataRequest(BtLoggerSPPService service){
@@ -109,9 +111,20 @@ public class RealTimeDataRequest {
     }
 
     /**
-     * Request battery voltage and temperature form CC2564 after 500ms delay
+     * Request battery voltage and temperature from CC2564 after 500ms delay
      * once a second.
      */
+    /*public void requestBattDetails(){
+        mBattHandler = new Handler();
+        final int delay = 1000;
+        mBattHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                service.write("AW0".getBytes());
+                mBattHandler.postDelayed(this,delay);
+            }
+        }, delay);
+    }*/
     public void requestBattDetails() {
         mBattHandler = new Handler();
         mBattTimer = new Timer();
@@ -123,13 +136,16 @@ public class RealTimeDataRequest {
                         // Here we wish to update each widget's values once every 5 secs
                         // Request batt voltage and batt temperature
                         service.write("AW0".getBytes());
-
                     }
                 });
             }
         };
 
         mBattTimer.schedule(mBattTimerTask, 500, 1000);
+    }
+    public void getOnceOffBattV(){
+        //Log.d(Constants.DEBUG_TAG, "")
+        service.write("AW0".getBytes());
     }
 
     /**
@@ -146,7 +162,6 @@ public class RealTimeDataRequest {
                 mChannelHandler.post(new Runnable() {
                     public void run() {
                         service.write(msg);
-
                     }
                 });
             }

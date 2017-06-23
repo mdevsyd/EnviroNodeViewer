@@ -47,6 +47,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Created by Michi on 21/02/2017.
+ * Activity to allow user to select  site, hub, instrument and channel they wish to query the server for.
+ *
+ */
+
 public class SearchActivity extends AppCompatActivity implements View.OnClickListener {
 
     private ListView mSitesLv;
@@ -57,7 +63,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     private JsonModel mJsonModel;
     private HttpUtils mHttpUtil;
     private ProgressDialog mDialog;
-    private JsonModel sitesJson;
     private Button mGoBtn;
     private Button mClearCh;
     private Button m24HrBtn;
@@ -136,8 +141,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mEndTimeBtn = (ImageView) findViewById(R.id.endTimeBtn);
         mStartRes = (TextView)findViewById(R.id.startResult);
         mEndRes  = (TextView)findViewById(R.id.endResult);
-
-        sitesJson = new JsonModel();
 
         mResponse = "";
 
@@ -379,11 +382,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                     break;
                 }
                 if (mSelectedChannels.size() != 0) {
-                    String res = mHttpUtil.concatUrlQuery(mQuery, "channels", mSelectedChannels);
+                    //String res = mHttpUtil.concatUrlPath(mQuery, "channels", mSelectedChannels);
                     try {
                         // Build the channel string from user selected channels
                         String channelsString = Uri.encode(mStringUtils.buildString("channels", mSelectedChannels), "=,&:?()%");
-
                         String urlWithChannels = mQuery.concat(channelsString);
                         String startDateTime;
                         String endDateTime;
@@ -396,9 +398,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                             // Clear the status flag in actionReg
                             mActionReg[0]=false;
-
-                            Log.d(Constants.DEBUG_TAG, "start :" + startDateTime);
-                            Log.d(Constants.DEBUG_TAG, "end :" + endDateTime);
 
                         }
                         else{
@@ -573,6 +572,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                             // Extract each data object's datestamp and save to array for plotting activity
 
+                            // create JSON object (result is returned from server query)
                             JSONObject jObject = new JSONObject(result);
                             JSONArray dataArray  = jObject.getJSONArray("data");
                             Log.d(Constants.DEBUG_TAG, "dataArray length: "+dataArray.length());
@@ -582,23 +582,25 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                                 JSONObject dataObj = dataArray.getJSONObject(i);
                                 dateList[i]=dataObj.getString("DateAndTime");
                             }
-                            Log.d(Constants.DEBUG_TAG, "dateList length :"+dateList.length);
 
                             // Pass data to and start plotting activity
                             Intent intent = new Intent(getBaseContext(), DataViewActivity.class);
+                            // add the amount of channels selected and the channel
                             intent.putExtra(Constants.SELECTED_CHANNELS, mSelectedChannels.size());
                             intent.putStringArrayListExtra(Constants.SEL_CH_ARRAY, (ArrayList<String>) mSelectedChannels);
+                            // create a bundle and add the string array containing date stamps
                             Bundle b = new Bundle();
                             b.putStringArray(Constants.DATESTAMP_ARRAY,dateList);
+                            // add bundle to intent
                             intent.putExtras(b);
-
                             // Reset action register before starting next activity
                             initialiseActionRegister();
-
+                            // start activity
                             startActivity(intent);
 
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            Log.e(Constants.ERROR_TAG,"JSON error getting date stamps in SearchActivity");
                         }catch (RuntimeException e){
                             e.printStackTrace();
                         }
@@ -628,7 +630,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
             JSONObject responseObj = new JSONObject(response);
             JSONArray dataArray = responseObj.getJSONArray("data");
-            //Log.d(Constants.DEBUG_TAG, "data in checkData :" + dataArray);
             if (dataArray.length() > 0) {
                 return true;
             }
@@ -741,7 +742,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             if (list != null) {
                 SiteAdapter hubAdapter = new SiteAdapter(SearchActivity.this, list);
                 mHubsLv.setAdapter(hubAdapter);
-                setListViewHeightBasedOnChildren(mHubsLv);
+                setListViewHeight(mHubsLv);
 
                 // Make the lv scroll inside the overall scrollview
                 // source: http://stackoverflow.com/questions/18367522/android-list-view-inside-a-scroll-view
@@ -780,13 +781,17 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 for (int j = 0; j < mHubsArray.length(); j++) {
                     JSONObject hub = mHubsArray.getJSONObject(j);
                     if (hub != null) {
+                        // check if serial is the one user has clicked
                         if (hub.getString("serial").equals(hubSerial)) {
                             JSONObject instObject = mHubsArray.getJSONObject(j);
                             if (instObject != null) {
+                                // get reference to the instruments array
                                 mInstrumentsArray = instObject.getJSONArray("instruments");
                                 for (int k = 0; k < mInstrumentsArray.length(); k++) {
+                                    // get reference to instrument object
                                     JSONObject instrument = mInstrumentsArray.getJSONObject(k);
                                     if (instrument != null) {
+                                        // get instrument serial, add to instruments list
                                         String instSerial = instrument.getString("serial");
                                         instruments.add(instSerial);
                                     }
@@ -809,7 +814,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             if (list != null) {
                 SiteAdapter siteAdapter = new SiteAdapter(SearchActivity.this, list);
                 mInstrumentsLv.setAdapter(siteAdapter);
-                setListViewHeightBasedOnChildren(mInstrumentsLv);
+                setListViewHeight(mInstrumentsLv);
 
                 // Allow for lv touch by overriding scrollview touch
                 mInstrumentsLv.setOnTouchListener(new View.OnTouchListener() {
@@ -853,10 +858,14 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
 
             try {
+                // create JSON object from the passed parameter
                 JSONObject jObject = new JSONObject(response);
+                // get reference to the data object
                 JSONObject dataObject = jObject.getJSONObject("data");
+                // get reference to the channels array
                 mChannelsArray = dataObject.getJSONArray("channels");
                 if (mChannelsArray != null) {
+                    // get each channel name in channels array, add it to channels arrayList
                     for (int j = 0; j < mChannelsArray.length(); j++) {
                         JSONObject channel = mChannelsArray.getJSONObject(j);
                         if (channel != null) {
@@ -880,18 +889,17 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                 final SiteAdapter channelsAdapter = new SiteAdapter(SearchActivity.this, list);
                 mChannelsLv.setAdapter(channelsAdapter);
-                setListViewHeightBasedOnChildren(mChannelsLv);
+                setListViewHeight(mChannelsLv);
                 mChannelsLv.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         // Disallow the touch request for parent scroll on touch of child view
                         v.getParent().requestDisallowInterceptTouchEvent(true);
                         return false;
-
                     }
                 });
 
-                // Create a list of the channels clicked
+                // Create a list for channels clicked on
                 mSelectedChannels = new ArrayList();
 
                 mChannelsLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -920,7 +928,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mSelectedChannels.clear();
     }
 
-    public static void setListViewHeightBasedOnChildren(ListView listView) {
+    public static void setListViewHeight(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null)
             return;

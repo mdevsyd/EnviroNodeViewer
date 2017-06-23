@@ -13,6 +13,11 @@ import android.widget.EditText;
 
 import com.dosecdesign.environodeviewer.R;
 
+/**
+ * Activity where the user can select to either connect to a remote Bluetooth device
+ * or view historical server data.
+ */
+
 public class OptionSelectActivity extends AppCompatActivity {
 
     private Button mViewDataBtn;

@@ -14,6 +14,7 @@ import java.io.OutputStreamWriter;
 
 /**
  * Created by Michi on 18/05/2017.
+ * Class to save to and read from device cache.
  */
 
 public class DeviceMemoryUtils {

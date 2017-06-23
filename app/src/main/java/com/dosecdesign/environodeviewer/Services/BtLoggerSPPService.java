@@ -220,7 +220,6 @@ public class BtLoggerSPPService {
     /**
      * This thread runs while attempting an outgoing connection with
      * a device. Source: https://developer.android.com/guide/topics/connectivity/bluetooth.html
-     * TODO finish this
      */
 
     private class ConnectThread extends Thread {
@@ -277,9 +276,7 @@ public class BtLoggerSPPService {
             }
 
             // The connection attempt succeeded. Perform work associated with
-            // the connection in a separate thread.
-            //manageMyConnectedSocket(mmSocket);
-
+            // the connection in a separate thread
             // Reset the ConnectThread because we're done
             synchronized (BtLoggerSPPService.this) {
                 mConnectThread = null;

@@ -66,7 +66,7 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                permissionUtils.check_permission(permissions,"Explain here why the app needs permissions",1);
+                permissionUtils.checkPermission(permissions,"Explain here why the app needs permissions",1);
 
                 // TODO comment this back in!!!!!!!!!
                 // startDiscovery();
@@ -239,7 +239,7 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
                 //Intent commsIntent = new Intent(DeviceListActivity.this, BTDataTransferActivity.class);
 
                 // TODO am testing with new activity, uncoment above line if not
-                Intent commsIntent = new Intent(DeviceListActivity.this, BluetoothAmlDataActivity.class);
+                Intent commsIntent = new Intent(DeviceListActivity.this, BluetoothAmlDashboardActivity.class);
 
                 commsIntent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, address);
                 commsIntent.putExtra(Constants.EXTRA_DEVICE_NAME, name);
@@ -252,11 +252,6 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
                 setResult(RESULT_CANCELED);
             }
 
-//            Intent viewDeviceIntent = new Intent(DeviceListActivity.this, BTDataTransferActivity.class);
-//            viewDeviceIntent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, address);
-//            viewDeviceIntent.putExtra(Constants.EXTRA_DEVICE_NAME, name);
-//            viewDeviceIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//            //startActivity(viewDeviceIntent);
 
         }
     };
@@ -336,7 +331,6 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
     @Override
     protected void onPause() {
         super.onPause();
-        //unregisterReceiver(mReceiver);
         //unregister listeners to the broadcasts
         try {
             this.unregisterReceiver(mReceiver);
