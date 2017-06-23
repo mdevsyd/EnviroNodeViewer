@@ -18,8 +18,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -42,8 +40,6 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Activity populates views with AML data acquired over Bluetooth connection with
@@ -62,14 +58,8 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
     private StringBuffer mOutStringBuffer;
 
     private TextView mBattVTv, mBattTempTv, mSuppVTv, mSerialTv, mCommentTv, mNameTv, mwidget5Tv, mwidget6Tv, mExtCurrentTv, mLivePlotTv, mDashTitleTv;
-    private ImageView mBattVIv, mTempIv, mExtSuppVoltIv, mIntTempIv, mIntPressureIv, mExtCurrentIv;
+    private ImageView mDisconnectIv, mConnectIv, mBattVIv, mTempIv, mExtSuppVoltIv, mIntTempIv, mIntPressureIv, mExtCurrentIv;
 
-    private Button mTestBtn, mTestBtn2;
-    private ImageButton mRefreshBtn;
-    private TimerTask mBatteryTask;
-    private Handler mSecHandler, mBatteryHandler;
-    private Timer mBattTimer, mCommentTimer, mExternalTimer, mSerialTimer, mNameTimer;
-    private TimerTask mExternalTimerTask, mCommentTimerTask, mSerialTimerTask, mNameTimerTask;
 
     private RealTimeDataRequest mReq;
 
@@ -99,6 +89,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         mDashTitleTv = (TextView) findViewById(R.id.dashTitleTv);
 
 
+
         mBattVIv = (ImageView) findViewById(R.id.battIv);
         mBattVIv.setOnClickListener(this);
         mTempIv = (ImageView) findViewById(R.id.battTempIv);
@@ -111,14 +102,10 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         mIntPressureIv.setOnClickListener(this);
         mExtCurrentIv = (ImageView) findViewById(R.id.supplyCurrentIv);
         mExtCurrentIv.setOnClickListener(this);
-
-        mRefreshBtn = (ImageButton) findViewById(R.id.refreshBtn);
-        mRefreshBtn.setOnClickListener(this);
-        mTestBtn = (Button) findViewById(R.id.testBtn);
-        mTestBtn.setOnClickListener(this);
-
-        mTestBtn2 = (Button) findViewById(R.id.connectBtn);
-        mTestBtn2.setOnClickListener(this);
+        mDisconnectIv = (ImageView) findViewById(R.id.disconnectIv);
+        mDisconnectIv.setOnClickListener(this);
+        mConnectIv = (ImageView)findViewById(R.id.connectIv);
+        mConnectIv.setOnClickListener(this);
 
         mLiveDataType = "";
         mLiveReg = new byte[24];
@@ -344,11 +331,11 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                                             addChartEntry(chan1float);
                                             break;
                                         case 7:
-                                            // AML channel 3
+                                            // channel 3
                                             addChartEntry(chan3float);
                                             break;
                                         case 8:
-                                            // AML channel 4
+                                            // channel 4
                                             addChartEntry(chan4float);
                                             break;
                                     }
@@ -447,8 +434,8 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
             // Connect to the BT device
             mBTLoggerSPPService.connect(device);
         } else if (getConnectionState() == BtLoggerSPPService.STATE_CONNECTED) {
-            mBTLoggerSPPService.stop();
-            mBTLoggerSPPService.start();
+            //mBTLoggerSPPService.stop();
+            //mBTLoggerSPPService.start();
         }
     }
 
@@ -456,28 +443,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
     public void onClick(View v) {
 
         switch (v.getId()) {
-            case R.id.testBtn:
-                // TODO remove this
-                hideWidgetArea();
-                break;
-            case R.id.connectBtn:
-                // TODO remove
-                showWidgetArea();
-                if (mBTLoggerSPPService.getState() == BtLoggerSPPService.STATE_NONE) {
 
-                    //start SPP Service
-                    startSPPService();
-                }
-                updateBtDashboard();
-                //mReq.getOnceOffBattV();
-                test = true;
-                //mBTLoggerSPPService.write("AW0".getBytes());
-                // SPP service is active, get live data
-                break;
-            case R.id.refreshBtn:
-                mReq.cancelActiveTimers();
-                updateBtDashboard();
-                break;
             // The following case is for when user click on any of the widget images,
             // they will be prompted if they'd like to go into live mode.
             case (R.id.battIv):
@@ -505,6 +471,16 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                 mLiveDataType = "Internal Pressure Sensor (mbar)";
                 hideWidgetArea();
                 break;
+            case R.id.disconnectIv:
+                disconnectDevice();
+                hideWidgetAndChartArea();
+                break;
+            case R.id.connectIv:
+                startSPPService();
+                showWidgetArea();
+                updateBtDashboard();
+                break;
+
 
         }
         // TODO for remaining channels, use determineChanFromStatusReg() to do:
@@ -513,6 +489,11 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         // set
         //}
 
+    }
+
+    private void disconnectDevice() {
+        mBTLoggerSPPService.stop();
+        clearActionReg();
     }
 
     private void setupChart() {
@@ -641,6 +622,16 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         mChartLayout.setVisibility(View.VISIBLE);
     }
 
+    private void hideWidgetAndChartArea(){
+        // user has clicked disconnect, hide both areas
+        clearActionReg();
+        mWidgetsLayout.setVisibility(View.GONE);
+        mChartLayout.setVisibility(View.GONE);
+        mNameTv.setText("--");
+        mSerialTv.setText("--");
+        mCommentTv.setText("--");
+    }
+
 
     /**
      * Setup and display dialogue asking user if they want to view live mode.
@@ -650,17 +641,13 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         // Get the layout inflater
         LayoutInflater inflater = this.getLayoutInflater();
         builder.setTitle(R.string.live_dialogue_title);
-        builder.setMessage("Would you like to view live " + type + " data now?");
+        builder.setMessage("Would you like to save an image of your plot? ");
 
         builder.setPositiveButton(R.string.go, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
 
-                // Create an intent to start the api activity when user hits "GO". Send mKey in intent.
-                Intent liveIntent = new Intent(BluetoothAmlDashboardActivity.this, LiveChartActivity.class);
-                liveIntent.putExtra(Constants.LIVE_DATA_TYPE, mLiveDataType);
-                liveIntent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, mConnectedDeviceAddress);
-                startActivity(liveIntent);
+
                 mReq.cancelActiveTimers();
 
 
