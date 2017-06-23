@@ -24,11 +24,9 @@
         </activity>
         <activity android:name=".Activities.SearchActivity" />
         <activity android:name=".Activities.DataViewActivity" />
-        <activity android:name=".Activities.LiveChartActivity" />
         <activity android:name=".Activities.BluetoothAmlDashboardActivity" />
         <activity android:name=".Activities.DeviceListActivity" />
         <activity android:name=".Activities.OptionSelectActivity" />
-        <activity android:name=".Activities.RealTimeDataActivity"></activity>
 
     </application>
 
