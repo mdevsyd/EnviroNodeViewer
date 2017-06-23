@@ -19,16 +19,11 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +53,7 @@ public class DataViewActivity extends AppCompatActivity {
 
     private DeviceMemoryUtils mDevMem;
 
-    private TextView mPlot1Tv;
+    private TextView mPlotTitleTv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +61,7 @@ public class DataViewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_data_view);
 
         mLineChart1 = (LineChart) findViewById(R.id.dataPlot1);
-        mPlot1Tv = (TextView) findViewById(R.id.plot1Tv);
+        mPlotTitleTv = (TextView) findViewById(R.id.plotTitleTv);
 
         mDevMem = new DeviceMemoryUtils();
 
@@ -116,7 +111,8 @@ public class DataViewActivity extends AppCompatActivity {
 
 
     /**
-     * Create entries for line chart
+     * Create entries for line chart. Creates a dataset and lineData
+     * with Y values only.
      *
      * @param numCh   amount of channels selected by user
      * @param chNames names of channels selected by user
@@ -124,63 +120,47 @@ public class DataViewActivity extends AppCompatActivity {
      */
     public ArrayList<Entry> getValuesFromResponse(int numCh, ArrayList<String> chNames) {
         try {
-            // Get channel data to plot
+            // Get channel data to plot from cached file
             JSONObject responseObj = new JSONObject(mCachedResponse);
+            // get reference to data array
             JSONArray dataArray = responseObj.getJSONArray("data");
-
+            // iterate through amount of channels selected by user
             for (int i = 0; i < numCh; i++) {
-                Log.d(Constants.DEBUG_TAG, "channel[i] is: " + chNames.get(i));
-                mPlot1Tv.setText(chNames.get(i));
-
-
-                // TODO maybe try initialising arraylists here
-                mSet = new LineDataSet(null, null);
-                mDataSets = new ArrayList<>();
-                mData = new LineData();
-
-                List<Entry> vals = new ArrayList<Entry>();
-
+                // set the plot title
+                mPlotTitleTv.setText(chNames.get(i));
+                // iterate through amount of data points in array the values
                 for (int j = 0; j < dataArray.length(); j++) {
-
-                    // Populate the string array for XAxis values
-
-
+                    // get reference to object (Channel Name: int value)
                     JSONObject object = dataArray.getJSONObject(j);
-                    // item -
+                    // get YAxis value
                     String item = object.getString(chNames.get(i));
-
                     try {
-                        // Convert value to float
+                        // Convert value to float --> Entry(float, float)
                         Float fItem = Float.parseFloat(String.valueOf(item));
-
-                        // Create an plot entry and add it to the entries list
+                        // Create an plot entry and add it to the entries list with dummy X value
                         Entry entry = new Entry(j, fItem);
                         mEntries.add(entry);
-
-
-                        //Log.d(Constants.DEBUG_TAG,"entry :"+entry);
                     } catch (NumberFormatException e) {
                         e.printStackTrace();
-
-                        //TODO this needs to be a dialogue
                         Toast.makeText(getBaseContext(), R.string.cannot_plot, Toast.LENGTH_LONG).show();
-
                     }
-                    //mList.add(fItem);
                 }
-                // Create LineDataSet Object (list, label)
+                // create the data set from the values in mEntries, set label
                 mSet = new LineDataSet(mEntries, chNames.get(i));
+                // setup the dataset visual characteristics
                 mSet.setColor(R.color.colorPrimary);
                 mSet.setAxisDependency(YAxis.AxisDependency.LEFT);
                 mSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
                 mSet.setDrawFilled(true);
                 mSet.setFillColor(Color.CYAN);
-
-
-                mDataSets = new ArrayList<ILineDataSet>();
+                // create arraylist and assign the set of data
+                mDataSets = new ArrayList<>();
                 mDataSets.add(mSet);
                 mData = new LineData(mDataSets);
-                createLineChart(mData, i + 1);
+                // add and format datestamps onto XAxis
+                setupXValues();
+                // setup nd refresh chart
+                createLineChart(mData);
 
             }
 
@@ -190,58 +170,40 @@ public class DataViewActivity extends AppCompatActivity {
         return mAllEntries;
     }
 
-    public LineData addDataLineSet(LineDataSet set) {
-
-        mDataSets.add(set);
-        LineData data = new LineData(mDataSets);
-        //Log.d(Constants.DEBUG_TAG, "Datasets length: "+mDataSets.size());
-        return data;
+    /**
+     * Method to set chart characteristics and refresh chart.
+     * @param data
+     */
+    public void createLineChart(LineData data) {
+        mLineChart1.setPinchZoom(true);
+        mLineChart1.setDescription(null);
+        mLineChart1.animateX(2000);
+        mLineChart1.setData(data);
+        mLineChart1.invalidate();
     }
 
-    public void createLineChart(LineData data, int chart) {
-        switch (chart) {
-            case 1:
-                mLineChart1.setPinchZoom(true);
-                mLineChart1.setDescription(null);
-                mLineChart1.animateX(2000);
-                mLineChart1.setData(data);
-                mLineChart1.invalidate();
+    /**
+     * Method to setup the XAxis style and format the XAxis values
+     * using value formatter.
+     */
+    private void setupXValues() {
+        try {
+            //get reference to the X axis and set its position on chart
+            XAxis xAxis = mLineChart1.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            // setup visual X Axis characteristics
+            xAxis.setGranularity(1f);
+            xAxis.setDrawGridLines(false);
+            // ensure first and last XAxis value can be entirely seen
+            xAxis.setAvoidFirstLastClipping(true);
+            // use value formatter to add datestamps to XAxis
+            xAxis.setValueFormatter(new MyAxisValueFormatter(mDatestamps));
 
-                try {
-                    final String[] xVals = new String[mEntries.size()];
-                    for (int i = 0; i < mEntries.size(); i++) {
-                        xVals[i] = ("" + mDatestamps[i]);
-                    }
-                    XAxis xAxis = mLineChart1.getXAxis();
-                    xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-                    xAxis.setDrawGridLines(true);
-                    xAxis.setGranularity(1f);
-                    xAxis.setAvoidFirstLastClipping(true);
-                    xAxis.setDrawGridLines(false);
-                    xAxis.setValueFormatter(new MyAxisValueFormatter(xVals));
-
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
-                }
-
-                break;
-            case 2:
-                mLineChart2.setData(data);
-                mLineChart2.invalidate();
-
-                break;
-            case 3:
-                mLineChart3.setData(data);
-                mLineChart3.invalidate();
-
-                break;
-            case 4:
-                mLineChart4.setData(data);
-                mLineChart4.invalidate();
-
-                break;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            Log.e(Constants.ERROR_TAG, "Trying to set axis values on null " +
+                    "chart in DataViewActivity");
         }
-
     }
 
 
