@@ -61,7 +61,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
     //String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
 
-    private TextView mBattVTv, mBattTempTv, mSuppVTv, mSerialTv, mCommentTv, mNameTv, mwidget5Tv, mwidget6Tv, mExtCurrentTv, mLivePlotTv;
+    private TextView mBattVTv, mBattTempTv, mSuppVTv, mSerialTv, mCommentTv, mNameTv, mwidget5Tv, mwidget6Tv, mExtCurrentTv, mLivePlotTv, mDashTitleTv;
     private ImageView mBattVIv, mTempIv, mExtSuppVoltIv, mIntTempIv, mIntPressureIv, mExtCurrentIv;
 
     private Button mTestBtn, mTestBtn2;
@@ -95,6 +95,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         mwidget6Tv = (TextView) findViewById(R.id.widget6Tv);
         mExtCurrentTv = (TextView) findViewById(R.id.supplyCurrentTv);
         mLivePlotTv = (TextView) findViewById(R.id.livePlotTv);
+        mDashTitleTv = (TextView) findViewById(R.id.dashTitleTv);
 
 
         mBattVIv = (ImageView) findViewById(R.id.battIv);
@@ -115,11 +116,11 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         mTestBtn = (Button) findViewById(R.id.testBtn);
         mTestBtn.setOnClickListener(this);
 
-        mTestBtn2 = (Button) findViewById(R.id.testBtn2);
+        mTestBtn2 = (Button) findViewById(R.id.connectBtn);
         mTestBtn2.setOnClickListener(this);
 
         mLiveDataType = "";
-        mLiveReg = new byte[8];
+        mLiveReg = new byte[24];
 
         mWidgetsLayout = (LinearLayout) findViewById(R.id.widgetArea);
 
@@ -139,11 +140,13 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         mBTLoggerSPPService = new BtLoggerSPPService(this, mHandler);
 
 
+
         // Get the device name and address from the intent that intiitated this activity
         Intent commsIntent = getIntent();
         mConnectedDeviceAddress = commsIntent.getStringExtra(Constants.EXTRA_DEVICE_ADDRESS);
         //mConnectedDeviceName = commsIntent.getStringExtra(Constants.EXTRA_DEVICE_NAME);
 
+        startSPPService();
         mReq = new RealTimeDataRequest(mBTLoggerSPPService);
         updateBtDashboard();
 
@@ -210,6 +213,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
 
     /**
      * Handler to handle messages back from the BluetoothSPP Service
+     * and update the UI based on returned messages.
      */
     private final Handler mHandler = new Handler() {
 
@@ -218,23 +222,20 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
             super.handleMessage(msg);
             switch (msg.what) {
                 case Constants.MESSAGE_STATE_CHANGE:
-                    // Update the status by switching on arg1 --> state of BluetoothChatService
+                    // switch on arg1 --> state of BluetoothChatService
                     switch (msg.arg1) {
+                        // update UI to show connection status
                         case BtLoggerSPPService.STATE_CONNECTED:
-                            // update UI to show connected
-                            setStatus(getString(R.string.title_connected));
+                            mDashTitleTv.setText(R.string.aml_connected);
                             break;
                         case BtLoggerSPPService.STATE_CONNECTING:
-                            // update UI to show connecting
-                            setStatus(getString(R.string.title_connecting));
+                            mDashTitleTv.setText(R.string.aml_connecting);
                             break;
                         case BtLoggerSPPService.STATE_LISTEN:
                             // do nothing to UI, we are listening for a connection
                             break;
                         case BtLoggerSPPService.STATE_NONE:
-                            // update UI, we are currently not connected
-                            setStatus(getString(R.string.title_disconnected));
-
+                            mDashTitleTv.setText(R.string.aml_not_connected);
                             break;
                     }
                     break;
@@ -442,9 +443,15 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                 // TODO remove this
                 hideWidgetArea();
                 break;
-            case R.id.testBtn2:
+            case R.id.connectBtn:
                 // TODO remove
                 showWidgetArea();
+                if (mBTLoggerSPPService.getState() == BtLoggerSPPService.STATE_NONE) {
+
+                    //start SPP Service
+                    startSPPService();
+                }
+                updateBtDashboard();
                 //mReq.getOnceOffBattV();
                 test = true;
                 //mBTLoggerSPPService.write("AW0".getBytes());
@@ -574,21 +581,29 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         return set;
     }
 
+    /**
+     * Displays the dashboard widget area on the UI,
+     * removes live chart view
+     */
 
     private void showWidgetArea() {
         mWidgetsLayout.setVisibility(View.VISIBLE);
         mChartLayout.setVisibility(View.GONE);
         // We are exiting live mode, set all bits in livemode register back to zero
-        for (int i = 0; i < mLiveReg.length; i++) {
-            mLiveReg[i] = 0;
-        }
-        //mLive=false;
+        clearActionReg();
     }
+
+    /**
+     * Removes the dashboard widget area from the UI view,
+     * replaces it with live chart view.
+     */
 
     private void hideWidgetArea() {
         // We are going into live mode, set the live mode bit in reg
         mLiveReg[0] = 1;
+        // clear previous chart data
         setupChart();
+        // swap the visible widget area type
         mWidgetsLayout.setVisibility(View.GONE);
         mChartLayout.setVisibility(View.VISIBLE);
     }
@@ -635,6 +650,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
      */
     public void updateBtDashboard() {
 
+        // request system vital parameters
         mReq.requestBattDetails();
         mReq.requestExternalSupply();
         mReq.requestSerialNumber();
@@ -643,21 +659,23 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
 
         // Setup the channel request byte array
         byte[] channelMsg = new byte[7];
+        // 3 bytes command
         channelMsg[0] = 'R';
         channelMsg[1] = 'B';
         channelMsg[2] = '1';
-        // now channel info...
-        channelMsg[3] = 0; // channelIndex; // starting channel number
+        // 4 bytes requested channels starting with first channel index
+        channelMsg[3] = 0;
         channelMsg[4] = 0;
         channelMsg[5] = 0;
         channelMsg[6] = 0;
+        // request channel data
         mReq.requestLiveChannelData(channelMsg);
     }
 
     @Override
     public void onBackPressed() {
-        // Check if any of the register bits are set, if so, we were live plotting, so
-        // pressing back should not end the activity
+        // Check if any of the register bits are set, if so, we were in live mode,
+        // so pressing back should not end the activity
         for (int i = 0; i < mLiveReg.length; i++) {
             if (mLiveReg[i] == 1) {
                 showWidgetArea();
@@ -677,8 +695,5 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         }
     }
 
-    public void setStatus(String status) {
-
-    }
 
 }
