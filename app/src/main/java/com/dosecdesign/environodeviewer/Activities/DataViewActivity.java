@@ -32,6 +32,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Activity responsible for plotting the returned channel data from server.
+ */
 public class DataViewActivity extends AppCompatActivity {
 
     private String mCachedResponse;
@@ -63,16 +66,12 @@ public class DataViewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_data_view);
 
         mLineChart1 = (LineChart) findViewById(R.id.dataPlot1);
-        mLineChart2 = (LineChart) findViewById(R.id.dataPlot2);
-        mLineChart3 = (LineChart) findViewById(R.id.dataPlot3);
-        mLineChart4 = (LineChart) findViewById(R.id.dataPlot4);
-
-        mPlot1Tv = (TextView)findViewById(R.id.plot1Tv);
+        mPlot1Tv = (TextView) findViewById(R.id.plot1Tv);
 
         mDevMem = new DeviceMemoryUtils();
 
         // Read from the cache
-        mCachedResponse = mDevMem.readFromCache(getCacheDir(),"channels");
+        mCachedResponse = mDevMem.readFromCache(getCacheDir(), "channels");
 
         mValues = new ArrayList<>();
         mSelChannels = new ArrayList();
@@ -92,12 +91,12 @@ public class DataViewActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         mSelChannels = extras.getStringArrayList(Constants.SEL_CH_ARRAY);
         mDatestamps = extras.getStringArray(Constants.DATESTAMP_ARRAY);
-        for (int i=0;i<mDatestamps.length;i++){
-            Log.d(Constants.DEBUG_TAG, "mDatestamp: "+mDatestamps[i]);
+        for (int i = 0; i < mDatestamps.length; i++) {
+            Log.d(Constants.DEBUG_TAG, "mDatestamp: " + mDatestamps[i]);
         }
 
         // Create an array of colours - 12 repeated colours currently
-        for(int i=0; i<3;i++){
+        for (int i = 0; i < 3; i++) {
             mColours.add(R.color.graphBlue);
             mColours.add(R.color.graphGreen);
             mColours.add(R.color.graphRed);
@@ -129,8 +128,8 @@ public class DataViewActivity extends AppCompatActivity {
             JSONObject responseObj = new JSONObject(mCachedResponse);
             JSONArray dataArray = responseObj.getJSONArray("data");
 
-            for (int i=0; i<numCh; i++){
-                Log.d(Constants.DEBUG_TAG, "channel[i] is: "+chNames.get(i));
+            for (int i = 0; i < numCh; i++) {
+                Log.d(Constants.DEBUG_TAG, "channel[i] is: " + chNames.get(i));
                 mPlot1Tv.setText(chNames.get(i));
 
 
@@ -141,13 +140,13 @@ public class DataViewActivity extends AppCompatActivity {
 
                 List<Entry> vals = new ArrayList<Entry>();
 
-                // TODO, currently can't select dateandtime
-                for(int j=0; j<dataArray.length();j++){
+                for (int j = 0; j < dataArray.length(); j++) {
 
                     // Populate the string array for XAxis values
 
 
                     JSONObject object = dataArray.getJSONObject(j);
+                    // item -
                     String item = object.getString(chNames.get(i));
 
                     try {
@@ -160,7 +159,7 @@ public class DataViewActivity extends AppCompatActivity {
 
 
                         //Log.d(Constants.DEBUG_TAG,"entry :"+entry);
-                    }catch (NumberFormatException e){
+                    } catch (NumberFormatException e) {
                         e.printStackTrace();
 
                         //TODO this needs to be a dialogue
@@ -181,20 +180,8 @@ public class DataViewActivity extends AppCompatActivity {
                 mDataSets = new ArrayList<ILineDataSet>();
                 mDataSets.add(mSet);
                 mData = new LineData(mDataSets);
-                createLineChart(mData, i+1);
-                Log.d(Constants.DEBUG_TAG,"LineData length "+ mData.getDataSetCount());
+                createLineChart(mData, i + 1);
 
-                // Empty the data to get next channel's data
-                /*mSet.clear();
-                mEntries.clear();
-                data.clearValues();*/
-
-              /*  // Create list of IDataSets
-                LineData data = addDataLineSet(mSet);
-                createLineChart(data,i+1);
-                *//*mAllEntries.add(mEntries);
-                mAllData.add(mList);
-                mList.clear();*/
             }
 
         } catch (JSONException e) {
@@ -203,7 +190,7 @@ public class DataViewActivity extends AppCompatActivity {
         return mAllEntries;
     }
 
-    public LineData addDataLineSet(LineDataSet set){
+    public LineData addDataLineSet(LineDataSet set) {
 
         mDataSets.add(set);
         LineData data = new LineData(mDataSets);
@@ -211,8 +198,8 @@ public class DataViewActivity extends AppCompatActivity {
         return data;
     }
 
-    public void createLineChart(LineData data, int chart){
-        switch(chart){
+    public void createLineChart(LineData data, int chart) {
+        switch (chart) {
             case 1:
                 mLineChart1.setPinchZoom(true);
                 mLineChart1.setDescription(null);
@@ -220,10 +207,10 @@ public class DataViewActivity extends AppCompatActivity {
                 mLineChart1.setData(data);
                 mLineChart1.invalidate();
 
-                try{
+                try {
                     final String[] xVals = new String[mEntries.size()];
                     for (int i = 0; i < mEntries.size(); i++) {
-                        xVals[i] = (""+mDatestamps[i]);
+                        xVals[i] = ("" + mDatestamps[i]);
                     }
                     XAxis xAxis = mLineChart1.getXAxis();
                     xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -233,7 +220,7 @@ public class DataViewActivity extends AppCompatActivity {
                     xAxis.setDrawGridLines(false);
                     xAxis.setValueFormatter(new MyAxisValueFormatter(xVals));
 
-                }catch(NullPointerException e ){
+                } catch (NullPointerException e) {
                     e.printStackTrace();
                 }
 
@@ -258,18 +245,18 @@ public class DataViewActivity extends AppCompatActivity {
     }
 
 
-    public class MyAxisValueFormatter implements IAxisValueFormatter{
+    public class MyAxisValueFormatter implements IAxisValueFormatter {
 
         private String[] mXVals;
 
-        public MyAxisValueFormatter(String[] xVals){
-            this.mXVals=xVals;
+        public MyAxisValueFormatter(String[] xVals) {
+            this.mXVals = xVals;
         }
 
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
             // value is the position of the label on the x axis
-            return mXVals[(int)value];
+            return mXVals[(int) value];
         }
 
     }
