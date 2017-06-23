@@ -87,9 +87,9 @@
     <string name="supply_voltage_v">Supply Voltage (V)</string>
     <string name="internal_pressure_mbar">Internal Pressure (mbar)</string>
     <string name="connected_to">Connected to:</string>
-    <string name="aml_connected">Your AML is connected</string>
-    <string name="aml_connecting">Your AML is connecting</string>
-    <string name="aml_not_connected">No device is currently connected</string>
+    <string name="aml_connected">Your AML is Connected</string>
+    <string name="aml_connecting">Your AML is Connecting</string>
+    <string name="aml_not_connected">No device is Connected</string>
 
 
 </resources>
