@@ -21,105 +21,48 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * Load screen activity that simulates program loading while
+ * showing EnviroNode logo. Shows a progress bar during
+ * simulated load time.
+ */
+
 public class SplashActivity extends AppCompatActivity {
 
-    private ProgressDialog mProg;
-    private HttpUtils mHttpUtil;
-    private DeviceMemoryUtils mDeviceMem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash);
 
-
-        mHttpUtil = new HttpUtils();
-
-        mDeviceMem = new DeviceMemoryUtils();
-
-        String baseUrl = mHttpUtil.buildUrl();
-        try {
-            URL url = new URL(baseUrl);
-            new RetrieveJsonDataTask().execute(url);
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), R.string.url_unrecognised, Toast.LENGTH_SHORT).show();
-        }
-
-
+        sleepThread();
     }
 
-    public class RetrieveJsonDataTask extends AsyncTask<URL, String, String> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
+    private void sleepThread() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    Thread.sleep(1000);
+                    Log.d(Constants.DEBUG_TAG, "done 1");
+                    Thread.sleep(1000);
+                    Log.d(Constants.DEBUG_TAG, "done 2");
 
-        }
-
-        HttpURLConnection mConnection = null;
-        BufferedReader reader = null;
-
-        @Override
-        protected String doInBackground(URL... params) {
-
-
-            URL url = params[0];
-            Log.d(Constants.DEBUG_TAG, "RetrieveJsonTask url :" + url);
-
-            try {
-
-                mConnection = (HttpURLConnection) url.openConnection();
-                mConnection.connect();
-
-                InputStream stream = mConnection.getInputStream();
-
-                reader = new BufferedReader(new InputStreamReader(stream));
-
-                String line = "";
-                StringBuffer buffer = new StringBuffer();
-
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line);
-                }
-                return buffer.toString();
+                    startApplication();
 
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (mConnection != null) {
-                    mConnection.disconnect();
-                }
-                try {
-                    if (reader != null) {
-                        reader.close();
-                    }
-
-                } catch (IOException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            if (result != null){
-
-                // Server has returned a result. Save the result to cache.
-                mDeviceMem.saveToCache(getCacheDir(),result,getBaseContext(), "site");
-
-                // Close splash screen and start application
-
-            }
-            Intent startAppIntent = new Intent(SplashActivity.this, OptionSelectActivity.class);
-            //Intent startAppIntent = new Intent(SplashActivity.this, SearchActivity.class);
-            //startAppIntent.putExtra(result, Constants.STRING_RESULT);
-            startActivity(startAppIntent);
-            finish();
-        }
+        }).start();
     }
+
+    public void startApplication(){
+        Intent startAppIntent = new Intent(SplashActivity.this, OptionSelectActivity.class);
+        startActivity(startAppIntent);
+        // finish this activity so the user can't return to splash screen ever
+        finish();
+    }
+
 }
