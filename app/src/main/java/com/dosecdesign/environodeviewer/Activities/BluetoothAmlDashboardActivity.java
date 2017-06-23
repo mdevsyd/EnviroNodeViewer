@@ -25,7 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.dosecdesign.environodeviewer.Model.RealTimeDataRequest;
+import com.dosecdesign.environodeviewer.Utitilies.RealTimeDataRequest;
 import com.dosecdesign.environodeviewer.R;
 import com.dosecdesign.environodeviewer.Services.BtLoggerSPPService;
 import com.dosecdesign.environodeviewer.Utitilies.Constants;
@@ -39,8 +39,6 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
-import org.w3c.dom.Text;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -52,7 +50,7 @@ import java.util.TimerTask;
  * the Bluetooth external logger.
  */
 
-public class BluetoothAmlDataActivity extends AppCompatActivity implements View.OnClickListener {
+public class BluetoothAmlDashboardActivity extends AppCompatActivity implements View.OnClickListener {
 
     private BluetoothAdapter mBluetoothAdapter = null;
     private String mConnectedDeviceAddress = null;
@@ -63,7 +61,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
     //String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
 
-    private TextView mBattVTv, mBattTempTv, mSuppVTv, mSerialTv, mCommentTv, mNameTv, mIntTempTv, mIntPressureTv, mExtCurrentTv, mLivePlotTv;
+    private TextView mBattVTv, mBattTempTv, mSuppVTv, mSerialTv, mCommentTv, mNameTv, mwidget5Tv, mwidget6Tv, mExtCurrentTv, mLivePlotTv;
     private ImageView mBattVIv, mTempIv, mExtSuppVoltIv, mIntTempIv, mIntPressureIv, mExtCurrentIv;
 
     private Button mTestBtn, mTestBtn2;
@@ -93,8 +91,8 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mSerialTv = (TextView) findViewById(R.id.amlSerialTv);
         mCommentTv = (TextView) findViewById(R.id.unitCommentTv);
         mNameTv = (TextView) findViewById(R.id.unitNameTv);
-        mIntTempTv = (TextView) findViewById(R.id.internalTempTv);
-        mIntPressureTv = (TextView) findViewById(R.id.internalPressureTv);
+        mwidget5Tv = (TextView) findViewById(R.id.widget5Tv);
+        mwidget6Tv = (TextView) findViewById(R.id.widget6Tv);
         mExtCurrentTv = (TextView) findViewById(R.id.supplyCurrentTv);
         mLivePlotTv = (TextView) findViewById(R.id.livePlotTv);
 
@@ -105,9 +103,9 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mTempIv.setOnClickListener(this);
         mExtSuppVoltIv = (ImageView) findViewById(R.id.solarIv);
         mExtSuppVoltIv.setOnClickListener(this);
-        mIntTempIv = (ImageView) findViewById(R.id.internalTempIv);
+        mIntTempIv = (ImageView) findViewById(R.id.widget5Iv);
         mIntTempIv.setOnClickListener(this);
-        mIntPressureIv = (ImageView) findViewById(R.id.internalPressureIv);
+        mIntPressureIv = (ImageView) findViewById(R.id.widget6Iv);
         mIntPressureIv.setOnClickListener(this);
         mExtCurrentIv = (ImageView) findViewById(R.id.supplyCurrentIv);
         mExtCurrentIv.setOnClickListener(this);
@@ -133,7 +131,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         // If the adapter is null, then Bluetooth is not supported
         if (mBluetoothAdapter == null) {
-            Toast.makeText(BluetoothAmlDataActivity.this, R.string.bt_unaavailble, Toast.LENGTH_LONG).show();
+            Toast.makeText(BluetoothAmlDashboardActivity.this, R.string.bt_unaavailble, Toast.LENGTH_LONG).show();
             finish();
         }
 
@@ -168,24 +166,22 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                     mConnectedDeviceAddress = address;
 
                     // Check for Bluetooth permissions
-                    int hasBluetoothPermissions = ContextCompat.checkSelfPermission(BluetoothAmlDataActivity.this,
+                    int hasBluetoothPermissions = ContextCompat.checkSelfPermission(BluetoothAmlDashboardActivity.this,
                             Manifest.permission.ACCESS_COARSE_LOCATION);
 
                     if (hasBluetoothPermissions != PackageManager.PERMISSION_GRANTED) {
-                        if (!ActivityCompat.shouldShowRequestPermissionRationale(BluetoothAmlDataActivity.this,
+                        if (!ActivityCompat.shouldShowRequestPermissionRationale(BluetoothAmlDashboardActivity.this,
                                 Manifest.permission.ACCESS_COARSE_LOCATION)) {
                             // add message to allow access to BT
 
                         }
                         return;
                     }
-                    ActivityCompat.requestPermissions(BluetoothAmlDataActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    ActivityCompat.requestPermissions(BluetoothAmlDashboardActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                             Constants.REQUEST_CODE_ASK_BT_PERMISSIONS);
                     return;
 
-
                 }
-
 
                 break;
 
@@ -193,8 +189,6 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                 // When the request to enable Bluetooth returns
                 if (resultCode != RESULT_OK) {
                     Log.d(Constants.DEBUG_TAG, "BT not enabled");
-
-                    // TODO an alert would be better here!
                     finish();
                 }
         }
@@ -209,7 +203,6 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Attempt to connect to the device
                     BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mConnectedDeviceAddress);
-
                     mBTLoggerSPPService.connect(device);
                 }
         }
@@ -228,59 +221,48 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                     // Update the status by switching on arg1 --> state of BluetoothChatService
                     switch (msg.arg1) {
                         case BtLoggerSPPService.STATE_CONNECTED:
-                            //setStatus(getString(R.string.title_connected) + " " + mConnectedDeviceName);
-                            //TODO if the getString doesn't work try getString(int, object)
-                            //mDataArrayAdapter.clear();
+                            // update UI to show connected
+                            setStatus(getString(R.string.title_connected));
                             break;
                         case BtLoggerSPPService.STATE_CONNECTING:
-                            //setStatus(getString(R.string.title_connecting));
+                            // update UI to show connecting
+                            setStatus(getString(R.string.title_connecting));
                             break;
                         case BtLoggerSPPService.STATE_LISTEN:
-                            //we are listening for a connection in the background
+                            // do nothing to UI, we are listening for a connection
                             break;
                         case BtLoggerSPPService.STATE_NONE:
-                            //setStatus(getString(R.string.title_disconnected));
+                            // update UI, we are currently not connected
+                            setStatus(getString(R.string.title_disconnected));
 
                             break;
                     }
                     break;
-                case Constants.MESSAGE_WRITE:
-                    byte[] writeBuffer = (byte[]) msg.obj;
-                    //Log.d(Constants.DEBUG_TAG, "wrote: "+writeBuffer);
-                    break;
 
-                // We are reading a returned message from the CC2564
-
+                // We are reading a returned Bluetooth message from the CC2564
                 case Constants.MESSAGE_READ:
+                    // create byte array of the response
                     byte[] readBuffer = (byte[]) msg.obj;
-                    //byte[] battVolt = Arrays.copyOfRange(readBuffer,3,7);
-                    String readMeassege = new String(readBuffer);
-
-                    //Log.d(Constants.DEBUG_TAG, "MESSAGE_READ, AML response is: " + readMeassege);
-
+                    // 'command' will determine what type of data is being returned
                     byte[] command = Arrays.copyOfRange(readBuffer, 0, 3);
                     String commandStr = new String(command);
-                    //Log.d(Constants.DEBUG_TAG, "command is: " + commandStr);
+                    // take action depending on first three bytes of command
                     switch (commandStr) {
-
                         // sf7 --> overall unit comment
                         case "sf7":
                             String unitName = new String(Arrays.copyOfRange(readBuffer, 3, 29));
                             mNameTv.setText(unitName);
                             break;
-
                         // sd7 --> overall unit comment
                         case "sd7":
                             String unitComment = new String(Arrays.copyOfRange(readBuffer, 3, 29));
                             mCommentTv.setText(unitComment);
                             break;
-
                         // al2 --> 8 bytes = overall unit serial number
                         case "al2":
                             String serial = new String(Arrays.copyOfRange(readBuffer, 3, 11));
                             mSerialTv.setText(serial);
                             break;
-
                         // aw2 -->  batt voltage and batt temperature
                         // 4 bytes = battV * 1000 then 4 bytes =  battTemp*10
                         case "aw2":
@@ -290,29 +272,26 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                                 float battVolts = Float.valueOf(battV) / 1000;
                                 float battTemp = Float.valueOf(battT) / 10;
                                 // Check if we are in live or dashboard mode
-                                // We are in dashboard mode
-                                if (!mLive) {
-                                    //Log.d(Constants.DEBUG_TAG, "batt volts dash : "+battVolts);
+
+                                if (mLiveReg[0]==0) {
+                                    // We are in dashboard mode
                                     mBattVTv.setText(String.valueOf(battVolts));
                                     mBattTempTv.setText(String.valueOf(battTemp));
                                 }
-                                // We are in live mode
-                                else if (mLive) {
-                                    //Log.d(Constants.DEBUG_TAG, "batt volts LIVE : "+battVolts);
-                                    // We will be receiving data once per second, add a chart entry each time we receive data
-                                    addChartEntry(battVolts);
-                                }
-                                if (test) {
-                                    Log.d(Constants.DEBUG_TAG, "SINGLE BATT VOLTS : " + battVolts);
-                                    test = false;
+                                else if (mLiveReg[0]==1) {
+                                    // We are in live mode
+                                    if (mLiveReg[1] == 1) {
+                                        // live batt mode --> We will be receiving data once per second, add a chart entry each rx
+                                        addChartEntry(battVolts);
+                                    }
                                 }
 
                             } catch (NumberFormatException e) {
                                 e.printStackTrace();
-                                Toast.makeText(BluetoothAmlDataActivity.this, R.string.batt_data_error, Toast.LENGTH_SHORT).show();
+                                Log.e(Constants.ERROR_TAG, "Error parsing batt data to float in mHandler");
+                                Toast.makeText(BluetoothAmlDashboardActivity.this, R.string.batt_data_error, Toast.LENGTH_SHORT).show();
                             }
                             break;
-
                         // ay1 -->  external supply voltage*1000
                         case "ay1":
                             String extV = new String(Arrays.copyOfRange(readBuffer, 3, 7));
@@ -321,26 +300,47 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
                                 mSuppVTv.setText(String.valueOf(extVolts));
                             } catch (NumberFormatException e) {
                                 e.printStackTrace();
-                                Toast.makeText(BluetoothAmlDataActivity.this, R.string.ext_data_error, Toast.LENGTH_SHORT).show();
+                                Log.e(Constants.ERROR_TAG, "Error parsing external supply voltage data to float in mHandler");
+                                Toast.makeText(BluetoothAmlDashboardActivity.this, R.string.ext_data_error, Toast.LENGTH_SHORT).show();
                             }
                             break;
+                        // rb9 --> channel data : [4 byte ch][block 1[4 byte  raw][4 byte converted]][block 2[4 byte raw][4 byte converted]]
+                        //                                   [block 3[4 byte  raw][4 byte converted]][block 4[4 byte raw][4 byte converted]]
                         case "rb9":
-                            byte[] chan1 = Arrays.copyOfRange(readBuffer, 11, 11 + 4);
-                            byte[] chan2 = Arrays.copyOfRange(readBuffer, 11 + 8, 11 + 8 + 4);
+                            // extract converted values, save to byte arrays for each channel
+                            // chan 1 start byte = 11, end byte = 11 + 4
+                            byte[] chan1 = Arrays.copyOfRange(readBuffer, 11, 15);
+                            // chan 2 start byte = 11 + 8, end byte = 11 + 8 + 4
+                            byte[] chan2 = Arrays.copyOfRange(readBuffer, 19, 23);
+                            // chan 3 start byte = 11 + 8 + 8, end byte = 11 + 8 + 8 + 4
+                            byte[] chan3 = Arrays.copyOfRange(readBuffer, 27, 31);
+                            // chan 4 start byte = 11 + 8 + 8 + 8, end byte = 11 + 8 + 8 + 8 + 4
+                            byte[] chan4 = Arrays.copyOfRange(readBuffer, 35, 39);
 
                             float chan1float = ByteBuffer.wrap(chan1).order(ByteOrder.LITTLE_ENDIAN).getFloat();
                             float chan2float = ByteBuffer.wrap(chan2).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-                            Log.d(Constants.DEBUG_TAG, "flaot 1 and 2 " + String.valueOf(chan1float) + " " + String.valueOf(chan2float));
+                            float chan3float = ByteBuffer.wrap(chan1).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                            float chan4float = ByteBuffer.wrap(chan2).order(ByteOrder.LITTLE_ENDIAN).getFloat();
 
-                            if (mLiveReg[0]==0) {
-                                mIntPressureTv.setText(String.valueOf(chan1float));
-                                mIntTempTv.setText(String.valueOf(chan2float));
-                            } else if (mLiveReg[0]==1) {
+                            // check which mode we are in to update appropriate widget
+                            if (mLiveReg[0] == 0) {
+                                // we are not live, update aml dashboard channel widgets
+                                mwidget6Tv.setText(String.valueOf(chan1float));
+                                mwidget5Tv.setText(String.valueOf(chan2float));
+                            } else if (mLiveReg[0] == 1) {
+                                // we are live, set the title of the graph
                                 mLivePlotTv.setText(mLiveDataType);
-                                if (mLiveReg[4]==1){
-                                    addChartEntry(chan1float);
-                                }
-                                else if(mLiveReg[5]==1){
+                                // check action register and initiate live plotting
+
+                                // take away
+                                float x = chan3float;
+                                float y = chan4float;
+                                Log.d(Constants.DEBUG_TAG, "flaot 1 and 2 " + String.valueOf(chan1float) + " " + String.valueOf(chan2float));
+
+
+                                if (mLiveReg[5] == 1) {
+                                    addChartEntry(chan2float);
+                                } else if (mLiveReg[6] == 1) {
                                     addChartEntry(chan2float);
                                 }
 
@@ -406,7 +406,6 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
 
                 //start SPP Service
                 startSPPService();
-
             }
         }
         updateBtDashboard();
@@ -440,34 +439,16 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
 
         switch (v.getId()) {
             case R.id.testBtn:
+                // TODO remove this
                 hideWidgetArea();
-                /*Log.d(Constants.DEBUG_TAG, "hfjg");
-                // First check the SPP service is still active
-                if (mBTLoggerSPPService.getState() != BtLoggerSPPService.STATE_CONNECTED) {
-                    Toast.makeText(this, R.string.not_connected, Toast.LENGTH_LONG).show();
-                    return;
-                } else {
-                    // SPP service is active, get live data
-                    byte[] channelMsg = new byte[7];
-                    channelMsg[0] = 'R';
-                    channelMsg[1] = 'B';
-                    channelMsg[2] = '1';
-                    // now channel info...
-                    channelMsg[3] = 0; // channelIndex; // starting channel number
-                    channelMsg[4] = 0;
-                    channelMsg[5] = 0;
-                    channelMsg[6] = 0;
-                    mReq.requestLiveChannelData(channelMsg);
-                    //getLiveChannelData(channelMsg);
-                    break;*/
                 break;
             case R.id.testBtn2:
+                // TODO remove
                 showWidgetArea();
                 //mReq.getOnceOffBattV();
                 test = true;
                 //mBTLoggerSPPService.write("AW0".getBytes());
                 // SPP service is active, get live data
-
                 break;
             case R.id.refreshBtn:
                 mReq.cancelActiveTimers();
@@ -477,13 +458,18 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
             // they will be prompted if they'd like to go into live mode.
             case (R.id.battIv):
                 mLiveDataType = "battery voltage";
-
-                mLiveReg[1] = 1;
+                // set all action reg to 0
+                clearActionReg();
+                // set required bits in action reg
+                mLiveReg[0] = mLiveReg[1] =1;
                 // Hide widgets and display the graph
                 hideWidgetArea();
                 break;
-            case (R.id.internalTempIv):
-                mLiveReg[5] = 1;
+            case (R.id.widget5Iv):
+                // set all action reg to 0
+                clearActionReg();
+                // set required bits in action reg
+                mLiveReg[0] = mLiveReg[5] =1;
                 mLiveDataType = "Internal Temperature Sensor (Deg. C)";
                 hideWidgetArea();
         }
@@ -532,6 +518,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
      */
     private void addChartEntry(float dataFloat) {
 
+        Log.d(Constants.DEBUG_TAG, "data float: "+dataFloat);
         // Get reference to the current data on the plot
         LineData data = mChart.getData();
 
@@ -539,6 +526,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         if (data != null) {
             ILineDataSet set = data.getDataSetByIndex(0);
 
+            Log.d(Constants.DEBUG_TAG, "creating set data");
             if (set == null) {
                 set = createSet();
                 data.addDataSet(set);
@@ -592,14 +580,14 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mChartLayout.setVisibility(View.GONE);
         // We are exiting live mode, set all bits in livemode register back to zero
         for (int i = 0; i < mLiveReg.length; i++) {
-            mLiveReg[i]=0;
+            mLiveReg[i] = 0;
         }
         //mLive=false;
     }
 
     private void hideWidgetArea() {
         // We are going into live mode, set the live mode bit in reg
-        mLiveReg[0]=1;
+        mLiveReg[0] = 1;
         setupChart();
         mWidgetsLayout.setVisibility(View.GONE);
         mChartLayout.setVisibility(View.VISIBLE);
@@ -621,7 +609,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
             public void onClick(DialogInterface dialog, int id) {
 
                 // Create an intent to start the api activity when user hits "GO". Send mKey in intent.
-                Intent liveIntent = new Intent(BluetoothAmlDataActivity.this, LiveChartActivity.class);
+                Intent liveIntent = new Intent(BluetoothAmlDashboardActivity.this, LiveChartActivity.class);
                 liveIntent.putExtra(Constants.LIVE_DATA_TYPE, mLiveDataType);
                 liveIntent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, mConnectedDeviceAddress);
                 startActivity(liveIntent);
@@ -653,7 +641,7 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         mReq.requestUnitComment();
         mReq.requestUnitName();
 
-        // Setup the channel request byte[]
+        // Setup the channel request byte array
         byte[] channelMsg = new byte[7];
         channelMsg[0] = 'R';
         channelMsg[1] = 'B';
@@ -673,10 +661,24 @@ public class BluetoothAmlDataActivity extends AppCompatActivity implements View.
         for (int i = 0; i < mLiveReg.length; i++) {
             if (mLiveReg[i] == 1) {
                 showWidgetArea();
+                // clear all existing chart data, setup fresh chart
+                setupChart();
+                clearActionReg();
                 return;
             }
         }
         // we were not in live mode, end the activity on back press
         super.onBackPressed();
     }
+
+    private void clearActionReg() {
+        for (int i=0;i<mLiveReg.length;i++){
+            mLiveReg[i]=0;
+        }
+    }
+
+    public void setStatus(String status) {
+
+    }
+
 }
