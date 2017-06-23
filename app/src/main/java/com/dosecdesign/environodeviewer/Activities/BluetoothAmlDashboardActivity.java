@@ -78,6 +78,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
     private LineChart mChart;
     private Boolean mLive = false, test = false;
     private byte[] mLiveReg;
+    private int mChIndex;
 
 
     @Override
@@ -121,6 +122,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
 
         mLiveDataType = "";
         mLiveReg = new byte[24];
+        mChIndex = -1;
 
         mWidgetsLayout = (LinearLayout) findViewById(R.id.widgetArea);
 
@@ -138,7 +140,6 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
 
         // Create a local instance of SPPService
         mBTLoggerSPPService = new BtLoggerSPPService(this, mHandler);
-
 
 
         // Get the device name and address from the intent that intiitated this activity
@@ -216,13 +217,14 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
      * and update the UI based on returned messages.
      */
     private final Handler mHandler = new Handler() {
-
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+            // switch on what the message contains to determine action
             switch (msg.what) {
+                // the Bluetooth state has changed
                 case Constants.MESSAGE_STATE_CHANGE:
-                    // switch on arg1 --> state of BluetoothChatService
+                    // switch on arg1 --> this is the state of BluetoothChatService
                     switch (msg.arg1) {
                         // update UI to show connection status
                         case BtLoggerSPPService.STATE_CONNECTED:
@@ -247,7 +249,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                     // 'command' will determine what type of data is being returned
                     byte[] command = Arrays.copyOfRange(readBuffer, 0, 3);
                     String commandStr = new String(command);
-                    // take action depending on first three bytes of command
+                    // take action depending on first three bytes
                     switch (commandStr) {
                         // sf7 --> overall unit comment
                         case "sf7":
@@ -273,20 +275,17 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                                 float battVolts = Float.valueOf(battV) / 1000;
                                 float battTemp = Float.valueOf(battT) / 10;
                                 // Check if we are in live or dashboard mode
-
-                                if (mLiveReg[0]==0) {
+                                if (mLiveReg[0] == 0) {
                                     // We are in dashboard mode
                                     mBattVTv.setText(String.valueOf(battVolts));
                                     mBattTempTv.setText(String.valueOf(battTemp));
-                                }
-                                else if (mLiveReg[0]==1) {
+                                } else if (mLiveReg[0] == 1) {
                                     // We are in live mode
                                     if (mLiveReg[1] == 1) {
                                         // live batt mode --> We will be receiving data once per second, add a chart entry each rx
                                         addChartEntry(battVolts);
                                     }
                                 }
-
                             } catch (NumberFormatException e) {
                                 e.printStackTrace();
                                 Log.e(Constants.ERROR_TAG, "Error parsing batt data to float in mHandler");
@@ -318,35 +317,43 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                             // chan 4 start byte = 11 + 8 + 8 + 8, end byte = 11 + 8 + 8 + 8 + 4
                             byte[] chan4 = Arrays.copyOfRange(readBuffer, 35, 39);
 
+                            // convert to floats --> plot requires Entry(float,float)
                             float chan1float = ByteBuffer.wrap(chan1).order(ByteOrder.LITTLE_ENDIAN).getFloat();
                             float chan2float = ByteBuffer.wrap(chan2).order(ByteOrder.LITTLE_ENDIAN).getFloat();
                             float chan3float = ByteBuffer.wrap(chan1).order(ByteOrder.LITTLE_ENDIAN).getFloat();
                             float chan4float = ByteBuffer.wrap(chan2).order(ByteOrder.LITTLE_ENDIAN).getFloat();
 
-                            // check which mode we are in to update appropriate widget
+                            // check which mode we are in to update appropriate widgets
                             if (mLiveReg[0] == 0) {
                                 // we are not live, update aml dashboard channel widgets
                                 mwidget6Tv.setText(String.valueOf(chan1float));
                                 mwidget5Tv.setText(String.valueOf(chan2float));
                             } else if (mLiveReg[0] == 1) {
-                                // we are live, set the title of the graph
+                                // we are in live mode, set the title of the plot
                                 mLivePlotTv.setText(mLiveDataType);
-                                // check action register and initiate live plotting
-
-                                // take away
-                                float x = chan3float;
-                                float y = chan4float;
-                                Log.d(Constants.DEBUG_TAG, "flaot 1 and 2 " + String.valueOf(chan1float) + " " + String.valueOf(chan2float));
-
-
-                                if (mLiveReg[5] == 1) {
-                                    addChartEntry(chan2float);
-                                } else if (mLiveReg[6] == 1) {
-                                    addChartEntry(chan2float);
+                                // check status reg to see which channel we want to plot
+                                int ch = determineChanFromStatusReg();
+                                if (ch >= 5 && ch <= 8) {
+                                    switch (ch) {
+                                        case 5:
+                                            // internal temp (AML channel 1)
+                                            addChartEntry(chan2float);
+                                            break;
+                                        case 6:
+                                            // internal pressure (AML channel 2)
+                                            addChartEntry(chan1float);
+                                            break;
+                                        case 7:
+                                            // AML channel 3
+                                            addChartEntry(chan3float);
+                                            break;
+                                        case 8:
+                                            // AML channel 4
+                                            addChartEntry(chan4float);
+                                            break;
+                                    }
                                 }
-
                             }
-                            break;
                     }
                     break;
                 case Constants.MESSAGE_TOAST:
@@ -355,6 +362,16 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
             }
         }
     };
+
+    private int determineChanFromStatusReg() {
+        int ch = -1;
+        for (int i = 5; i < mLiveReg.length; i++) {
+            if (mLiveReg[i] == 1) {
+                ch = i;
+            }
+        }
+        return ch;
+    }
 
     @Override
     protected void onStart() {
@@ -468,7 +485,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                 // set all action reg to 0
                 clearActionReg();
                 // set required bits in action reg
-                mLiveReg[0] = mLiveReg[1] =1;
+                mLiveReg[0] = mLiveReg[1] = 1;
                 // Hide widgets and display the graph
                 hideWidgetArea();
                 break;
@@ -476,10 +493,25 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
                 // set all action reg to 0
                 clearActionReg();
                 // set required bits in action reg
-                mLiveReg[0] = mLiveReg[5] =1;
+                mLiveReg[0] = mLiveReg[5] = 1;
                 mLiveDataType = "Internal Temperature Sensor (Deg. C)";
                 hideWidgetArea();
+                break;
+            case (R.id.widget6Iv):
+                // set all action reg to 0
+                clearActionReg();
+                // set required bits in action reg
+                mLiveReg[0] = mLiveReg[6] = 1;
+                mLiveDataType = "Internal Pressure Sensor (mbar)";
+                hideWidgetArea();
+                break;
+
         }
+        // TODO for remaining channels, use determineChanFromStatusReg() to do:
+        // if(I have clicked on 10th widget,
+        //if(mChIndex == 4){
+        // set
+        //}
 
     }
 
@@ -514,6 +546,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         YAxis y = mChart.getAxisLeft();
         y.setTextColor(Color.BLUE);
         y.setDrawGridLines(true);
+        mChart.invalidate();
     }
 
     /**
@@ -525,7 +558,7 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
      */
     private void addChartEntry(float dataFloat) {
 
-        Log.d(Constants.DEBUG_TAG, "data float: "+dataFloat);
+        Log.d(Constants.DEBUG_TAG, "data float: " + dataFloat);
         // Get reference to the current data on the plot
         LineData data = mChart.getData();
 
@@ -668,8 +701,9 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
         channelMsg[4] = 0;
         channelMsg[5] = 0;
         channelMsg[6] = 0;
+        mChIndex = channelMsg[3];
         // request channel data
-        mReq.requestLiveChannelData(channelMsg);
+        mReq.requestChannelData(channelMsg);
     }
 
     @Override
@@ -690,8 +724,8 @@ public class BluetoothAmlDashboardActivity extends AppCompatActivity implements 
     }
 
     private void clearActionReg() {
-        for (int i=0;i<mLiveReg.length;i++){
-            mLiveReg[i]=0;
+        for (int i = 0; i < mLiveReg.length; i++) {
+            mLiveReg[i] = 0;
         }
     }
 

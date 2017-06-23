@@ -173,6 +173,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
         mCachedResponse = mDevMem.readFromCache(getCacheDir(), "site");
 
+        mStartTime = "00:00:00";
+        mEndTime = "00:00:00";
         mStartDateStamp = "";
         mEndDateStamp="";
         mStartYear = mStartMonth = mStartDay = mEndYear = mEndMonth = mEndDay =
