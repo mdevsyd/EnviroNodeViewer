@@ -313,32 +313,33 @@ public class BtLoggerSPPService {
                 tmpIn = socket.getInputStream();
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
-                Log.e(Constants.DEBUG_TAG, "temp sockets not created", e);
+                Log.e(Constants.ERROR_TAG, "temp sockets not created", e);
             }
 
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
         }
 
+        // runs when mConnectedThread.start() called
         public void run() {
 
+            // buffer array for inputstream bytes
             byte[] buffer = new byte[512];
             int bytes;
 
-            // Listen to the inputstream while connected
-
+            // Always listen to the input stream while connected
             while (true) {
                 try {
-                    // Read from the input stream
+                    // Read from the input stream, store to buffer
                     bytes = mmInStream.read(buffer);
-                    //mDataView.write(buffer, bytes);
 
+                    // give msg to mHandler to proces on UI thread
                     mHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 } catch (IOException e) {
                     Log.e(Constants.DEBUG_TAG, "disconnected", e);
+                    // advise mHandler if we become disconnected
                     connectionLost();
                     break;
-
                 }
             }
         }

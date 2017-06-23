@@ -43,7 +43,7 @@ public class RealTimeDataRequest {
                 });
             }
         };
-        mNameTimer.schedule(mNameTimerTask, 1000, 1000);
+        mNameTimer.schedule(mNameTimerTask, 400, 1000);
     }
 
     /**
@@ -65,7 +65,7 @@ public class RealTimeDataRequest {
             }
         };
 
-        mCommentTimer.schedule(mCommentTimerTask, 1050, 1000);
+        mCommentTimer.schedule(mCommentTimerTask, 450, 1000);
     }
 
     /**
@@ -85,7 +85,7 @@ public class RealTimeDataRequest {
                 });
             }
         };
-        mSerialTimer.schedule(mSerialTimerTask, 1100, 1000);
+        mSerialTimer.schedule(mSerialTimerTask, 350, 1000);
     }
 
     /**
@@ -133,7 +133,7 @@ public class RealTimeDataRequest {
             public void run() {
                 mBattHandler.post(new Runnable() {
                     public void run() {
-                        // Here we wish to update each widget's values once every 5 secs
+                        // Here we wish to update each widget's values once every second
                         // Request batt voltage and batt temperature
                         service.write("AW0".getBytes());
                     }
@@ -141,7 +141,7 @@ public class RealTimeDataRequest {
             }
         };
 
-        mBattTimer.schedule(mBattTimerTask, 500, 1000);
+        mBattTimer.schedule(mBattTimerTask, 450, 1000);
     }
     public void getOnceOffBattV(){
         //Log.d(Constants.DEBUG_TAG, "")
@@ -149,13 +149,16 @@ public class RealTimeDataRequest {
     }
 
     /**
-     * Requests channel data from AML once a second for the selected channel
-     * @param msg - byte array containing the command and channel index
+     * Requests channel data from AML once a second based on msg generated
+     * in dashboard activity.
+     * @param msg - byte array length 7 containing the command and channel index
      */
-    public void requestLiveChannelData(final byte[] msg) {
+    public void requestChannelData(final byte[] msg) {
+        // handler for timer task
         mChannelHandler = new Handler();
+        // create background timer
         mChannelTimer = new Timer();
-
+        // create Timer Task to execute the request for data to CC2564
         mChTimerTask = new TimerTask() {
             @Override
             public void run() {
@@ -166,7 +169,7 @@ public class RealTimeDataRequest {
                 });
             }
         };
-
+        // schedule timer for 500ms delay, frequency of 1000ms
         mChannelTimer.schedule(mChTimerTask, 500, 1000);
     }
 
