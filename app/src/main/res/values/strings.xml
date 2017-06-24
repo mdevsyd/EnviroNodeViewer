@@ -90,6 +90,7 @@
     <string name="aml_connected">Your Device is Connected</string>
     <string name="aml_connecting">Your Device is Connecting</string>
     <string name="aml_not_connected">No Device is Connected</string>
+    <string name="re_connected">Your device was re-connected</string>
 
 
 </resources>

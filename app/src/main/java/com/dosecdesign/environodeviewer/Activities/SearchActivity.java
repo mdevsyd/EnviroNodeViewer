@@ -23,7 +23,6 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.dosecdesign.environodeviewer.Adapters.SiteAdapter;
-import com.dosecdesign.environodeviewer.Model.JsonModel;
 import com.dosecdesign.environodeviewer.R;
 import com.dosecdesign.environodeviewer.Utitilies.Constants;
 import com.dosecdesign.environodeviewer.Utitilies.DeviceMemoryUtils;
@@ -60,7 +59,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     private ListView mInstrumentsLv;
     private ListView mChannelsLv;
     private SiteAdapter mSiteAdapter;
-    private JsonModel mJsonModel;
     private HttpUtils mHttpUtil;
     private ProgressDialog mDialog;
     private Button mGoBtn;
@@ -77,6 +75,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
     private TextView mStartRes;
     private TextView mEndRes;
+    private TextView mHubNameTv, mInstNameTv, mChNameTv, mDateTimeTv;
 
     private int mDay, mMonth, mYear, mHour, mMin;
 
@@ -141,6 +140,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mEndTimeBtn = (ImageView) findViewById(R.id.endTimeBtn);
         mStartRes = (TextView)findViewById(R.id.startResult);
         mEndRes  = (TextView)findViewById(R.id.endResult);
+        mHubNameTv = (TextView)findViewById(R.id.hubNameTv);
+        mInstNameTv = (TextView) findViewById(R.id.instrumentNameTv);
+        mChNameTv = (TextView) findViewById(R.id.chNameTv);
+        mDateTimeTv = (TextView) findViewById(R.id.dateTimeTv);
 
         mResponse = "";
 
@@ -274,7 +277,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                             dayString = "0" + String.valueOf(dayOfMonth);
                         }
                         mStartDate = year + "-" + monthString + "-" + dayString;
-                        Log.d(Constants.DEBUG_TAG, "selected start date set to: " + mStartDate);
                         setDateResult();
                     }
                 }
@@ -338,7 +340,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                             dayString = "0" + String.valueOf(dayOfMonth);
                         }
                         mEndDate = year + "-" + monthString + "-" + dayString;
-                        Log.d(Constants.DEBUG_TAG, "selected end date set to: " + mEndDate);
                         setDateResult();
 
                     }
@@ -424,9 +425,9 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                                 URL url = new URL(apiQuery);
                                 mUrl = url;
                                 mDataRequestFlag = true;
-                                new RetrieveJsonDataTask().execute(url);
 
-                                Log.d(Constants.DEBUG_TAG, "Complete URL is : " + apiQuery);
+                                Log.d(Constants.DEBUG_TAG, "Hub is: "+mSelectedHub+", Device is: "+mSelectedInstrument+", channel is: "+mSelectedChannels.get(0)+",\n start date/time is: "+startDateTime+", end date/time is: "+endDateTime);
+                                new RetrieveJsonDataTask().execute(url);
                                 if(mHttpError){
                                     new RetrieveJsonDataTask().execute(mUrl);
                                 }
@@ -455,30 +456,35 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 break;
             case R.id.clearChBtn:
                 mSelectedChannels.clear();
+                mChNameTv.setText("");
                 break;
             case R.id.last24Btn:
                 // Subtract one day from today
                 newDate = mTimeUtils.addOrSubDays(-1, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
             case R.id.last7DaysBtn:
                 // Subtract 7 days from today
                 newDate = mTimeUtils.addOrSubDays(-7, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
             case R.id.lastMonthBtn:
                 // Subtract 1 month from today
                 newDate = mTimeUtils.addOrSubMonths(-1, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
             case R.id.last365DaysBtn:
                 // Subtract 1 year from today
                 newDate = mTimeUtils.addOrSubYears(-1, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
 
 
@@ -491,6 +497,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+
 
             mHttpError =false;
 
@@ -511,8 +518,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         protected String doInBackground(URL... params) {
 
 
+
             URL url = params[0];
-            Log.d(Constants.DEBUG_TAG, "RetrieveJsonTask url :" + url);
 
             try {
 
@@ -577,7 +584,6 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                             // create JSON object (result is returned from server query)
                             JSONObject jObject = new JSONObject(result);
                             JSONArray dataArray  = jObject.getJSONArray("data");
-                            Log.d(Constants.DEBUG_TAG, "dataArray length: "+dataArray.length());
                             String[] dateList = new String[dataArray.length()];
 
                             for (int i=0;i<dataArray.length();i++){
@@ -688,6 +694,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 mSitesLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
                         mSelectedSite = String.valueOf(parent.getItemAtPosition(position));
                         new GetHubDataTask().execute(mResponse, (String.valueOf(position)));
                     }
@@ -763,6 +770,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         mSelectedHub = String.valueOf(parent.getItemAtPosition(position));
+                        mHubNameTv.setText(mSelectedHub);
                         new GetInstrumentDataTask().execute(mSelectedHub);
                     }
                 });
@@ -832,6 +840,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         mSelectedInstrument = String.valueOf(parent.getItemAtPosition(position));
+                        mInstNameTv.setText(mSelectedInstrument);
                         try {
                             URL instrumentUrl = new URL(mHttpUtil.concatUrlPath(mSelectedInstrument));
                             mQuery = instrumentUrl.toString();
@@ -909,8 +918,9 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
                         String channel = String.valueOf(parent.getItemAtPosition(position));
+                        mChNameTv.setText(channel);
+                        mSelectedChannels.clear();
                         mSelectedChannels.add(channel);
-                        Log.d(Constants.DEBUG_TAG, "Selected channel (no formatting) :" + channel);
                     }
                 });
 
@@ -928,6 +938,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         super.onBackPressed();
         // Clear the previously selected channel array when user presses back key
         mSelectedChannels.clear();
+        mChNameTv.setText("");
     }
 
     public static void setListViewHeight(ListView listView) {
@@ -955,8 +966,9 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         if(mActionReg[1] && mActionReg[2] && mActionReg[3] && mActionReg[4]){
             String startDateTime = mStartDate + " " + mStartTime;
             String endDateTime = mEndDate + " " + mEndTime;
-            mStartRes.setText(startDateTime);
-            mEndRes.setText(endDateTime);
+            /*mStartRes.setText(startDateTime);
+            mEndRes.setText(endDateTime);*/
+            mDateTimeTv.setText(startDateTime+" to "+endDateTime);
         }
 
     }

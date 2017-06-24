@@ -74,7 +74,6 @@ public class TimeUtils {
             Date end = sdf.parse(endDateTime);
 
             if(start.before(end)){
-                Log.d(Constants.DEBUG_TAG,"date range valid");
                 return true;
             }
             else {

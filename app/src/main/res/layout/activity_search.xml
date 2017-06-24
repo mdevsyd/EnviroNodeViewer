@@ -16,6 +16,65 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight=".5"
+                    android:layout_height="wrap_content"
+                    android:text="Hub: "/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1.5"
+                    android:layout_height="wrap_content"
+                    android:textStyle="italic"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:id="@+id/hubNameTv"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Instument: "/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1.5"
+                    android:layout_height="wrap_content"
+                    android:textStyle="italic"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:id="@+id/instrumentNameTv"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Channel: "/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="4"
+                    android:textStyle="italic"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/chNameTv"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1.2"
+                    android:layout_height="wrap_content"
+                    android:text="Date Range: "/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:textStyle="italic"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:layout_weight="5"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/dateTimeTv"/>
+
+            </LinearLayout>
+
+            <android.support.v4.widget.Space
+                android:layout_width="0dp"
+                android:layout_height="10dp" />
 
             <TextView
                 android:layout_width="match_parent"
