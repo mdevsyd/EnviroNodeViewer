@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class DataViewActivity extends AppCompatActivity {
 
-    private String mCachedResponse;
+    private String mCachedResponse, mHubName, mInstName, mChName;
 
     private LineChart mLineChart1;
     private LineChart mLineChart2;
@@ -53,7 +53,7 @@ public class DataViewActivity extends AppCompatActivity {
 
     private DeviceMemoryUtils mDevMem;
 
-    private TextView mPlotTitleTv;
+    private TextView mPlotTitleTv, mHubTv, mInstTv  ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,9 +86,12 @@ public class DataViewActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         mSelChannels = extras.getStringArrayList(Constants.SEL_CH_ARRAY);
         mDatestamps = extras.getStringArray(Constants.DATESTAMP_ARRAY);
-        for (int i = 0; i < mDatestamps.length; i++) {
-            Log.d(Constants.DEBUG_TAG, "mDatestamp: " + mDatestamps[i]);
-        }
+        mChName = extras.getString(Constants.SELECTED_CHANNEL_NAME);
+        mHubName = extras.getString(Constants.SELECTED_HUB);
+        mInstName = extras.getString(Constants.SELECTED_INSTRUMENT);
+
+        mHubTv = (TextView) findViewById(R.id.hubTv);
+        mInstTv = (TextView) findViewById(R.id.instTv);
 
         // Create an array of colours - 12 repeated colours currently
         for (int i = 0; i < 3; i++) {
@@ -126,8 +129,10 @@ public class DataViewActivity extends AppCompatActivity {
             JSONArray dataArray = responseObj.getJSONArray("data");
             // iterate through amount of channels selected by user
             for (int i = 0; i < numCh; i++) {
-                // set the plot title
+                // set the plot textviews
                 mPlotTitleTv.setText(chNames.get(i));
+                mHubTv.setText("Hub "+mHubName);
+                mInstTv.setText("Device "+mInstName);
                 // iterate through amount of data points in array the values
                 for (int j = 0; j < dataArray.length(); j++) {
                     // get reference to object (Channel Name: int value)
