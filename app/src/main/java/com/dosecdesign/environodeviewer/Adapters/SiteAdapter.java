@@ -1,6 +1,7 @@
 package com.dosecdesign.environodeviewer.Adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,9 +51,12 @@ public class SiteAdapter extends BaseAdapter{
 
         String item = mDataItem.get(position);
 
-        TextView siteName = (TextView) rowView.findViewById(R.id.searchListItem);
+
+        final TextView siteName = (TextView) rowView.findViewById(R.id.searchListItem);
 
         siteName.setText(item);
+
+
 
         return rowView;
     }

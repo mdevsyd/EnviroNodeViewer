@@ -27,7 +27,7 @@
         <activity android:name=".Activities.BluetoothAmlDashboardActivity" />
         <activity android:name=".Activities.DeviceListActivity" />
         <activity android:name=".Activities.OptionSelectActivity" />
-
+        <activity android:name=".Activities.DashboardActivityTemp"></activity>
     </application>
 
 </manifest>

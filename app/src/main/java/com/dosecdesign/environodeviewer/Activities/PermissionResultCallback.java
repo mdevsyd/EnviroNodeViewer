@@ -3,7 +3,7 @@ package com.dosecdesign.environodeviewer.Activities;
 import java.util.ArrayList;
 
 /**
- * Created by Michi on 21/05/2017.
+ * Permissions interface
  */
 interface PermissionResultCallback
 {

@@ -22,8 +22,11 @@ public class OptionSelectActivity extends AppCompatActivity {
 
     private Button mViewDataBtn;
     private Button mConnectDeviceBtn;
-    private String mKey="";
 
+    /**
+     * Setup both buttons and the onlclik listeners to take user to the applicable activity
+     * based on their seleection
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

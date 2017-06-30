@@ -206,6 +206,7 @@ public class BtLoggerSPPService {
     private void connectionFailed() {
         setState(STATE_NONE);
 
+
         //Send a failed connection message back to the UI
         Message msg = mHandler.obtainMessage(MESSAGE_TOAST);
         Bundle bundle = new Bundle();
@@ -263,11 +264,12 @@ public class BtLoggerSPPService {
                 // Unable to connect; close the socket and return.
 
                 // update UI to alert of failed connection
-                connectionFailed();
+               // connectionFailed();
 
                 // Attempt to close socket if failed
                 try {
                     mmSocket.close();
+                    connectionFailed();
 
                 } catch (IOException closeException) {
                     Log.e(DEBUG_TAG, "Could not close the client socket", closeException);

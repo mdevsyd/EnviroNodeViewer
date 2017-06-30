@@ -28,6 +28,11 @@ import com.dosecdesign.environodeviewer.Utitilies.Constants;
 import java.util.ArrayList;
 import java.util.Set;
 
+/**
+ *  Activity to show the user a list of paired devices and an option to scan for new devices. New devices are added
+ *  to a list and user can select any device to attempt a connection.
+ */
+
 public class DeviceListActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback, PermissionResultCallback {
 
     private BluetoothAdapter mBtAdapter;
@@ -41,6 +46,11 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
 
     PermissionUtils permissionUtils;
 
+    /**
+     * Sets up the view and click listener for scan button. Checks bluetooth compatability, registers
+     * broadcast receivers and requests paired devices from host device.
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -62,6 +72,7 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
 
         setResult(Activity.RESULT_CANCELED);
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+        //permissionUtils.checkPermission(permissions,"Your permission is required to use Bluetooth on this device",1);
 
         scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,7 +80,7 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
                 permissionUtils.checkPermission(permissions,"Explain here why the app needs permissions",1);
 
                 // TODO comment this back in!!!!!!!!!
-                // startDiscovery();
+                 //startDiscovery();
 
                 // make the current button disappear
                 v.setVisibility(View.GONE);
@@ -133,6 +144,9 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         return pairedDevices;
     }
 
+    /**
+     * Creates an intent to enable Bluetooth on the host device if it is not yet enabled
+     */
     private void enableBt() {
         if (!mBtAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -140,6 +154,9 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         }
     }
 
+    /**
+     * Alerts the user if Bluetooth is not available on their device
+     */
     private void checkBtCompatible() {
         //check if BT is supported on host device
         if (mBtAdapter == null) {
@@ -148,72 +165,20 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         }
     }
 
-    private void startDiscovery() {
-        findViewById(R.id.title_new_devices).setVisibility(View.VISIBLE);
-        //TODO Progress bar of some sort
-        //cancel any current discoveries if any exist
-        if (mBtAdapter.isDiscovering()) {
-            mBtAdapter.cancelDiscovery();
-        }
-        mBtAdapter.startDiscovery();
-
-    }
-
-    private void requestBTPermission(){
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION)
-                || ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-            // Provide an additional rationale to the user if the permission was not granted
-            // and the user would benefit from additional context for the use of the permission.
-            // For example, if the request has been denied previously.
-
-            // Display a SnackBar with an explanation and a button to trigger the request.
-
-            Snackbar.make(mLayout, "rationale text",
-                    Snackbar.LENGTH_INDEFINITE)
-                    .setAction("OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            ActivityCompat.requestPermissions(DeviceListActivity.this,
-                                    Constants.PERMISSIONS_BLUETOOTH, Constants.REQUEST_CODE_ASK_BT_PERMISSIONS);
-                        }
-                    })
-                    .show();
-        } else{
-            // Permissions haven't been granted yet, request them
-            ActivityCompat.requestPermissions(this, Constants.PERMISSIONS_BLUETOOTH, Constants.REQUEST_CODE_ASK_BT_PERMISSIONS);
-        }
-
-    }
-
+    /**
+     * Method to redirect to permissions utility, and extract permissions result
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-
-        // redirects to utils
 
         permissionUtils.onRequestPermissionsResult(requestCode,permissions,grantResults);
 
     }
 
-        /*switch (requestCode) {
-            case Constants.REQUEST_CODE_ASK_BT_PERMISSIONS:
-                Log.d(Constants.DEBUG_TAG, " checking permissions");
-                // If the request gets cancelled, result[] is empty
-                if (grantResults.length ==1  && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this,"permission was granted", Toast.LENGTH_SHORT).show();
-                    // Permission was granted, start the discovery
-                    mBtAdapter.startDiscovery();
-                    break;
-
-                }
-                default: super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }*/
-
 
     /**
-     * On click listener for the paired and new devices in lists
+     * On click listener for the paired and new devices in lists. Cancels discovery if item is clicked.
+     * Sends the name and address of the device selected by the user to the next activity.
      */
     private AdapterView.OnItemClickListener mDeviceClickListener = new AdapterView.OnItemClickListener() {
 
@@ -230,15 +195,13 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
                 String address = info.substring(info.length() - 17);
                 String name = info.substring(0, info.length() - 17);
 
-                Toast.makeText(DeviceListActivity.this, name + ", " + address, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(DeviceListActivity.this, name + ", " + address, Toast.LENGTH_SHORT).show();
 
                 //enable local device discoverability - only necessary when connecting two android devices
                 //enableHostDiscoverability();
 
                 //create intent including the hardware address
-                //Intent commsIntent = new Intent(DeviceListActivity.this, BTDataTransferActivity.class);
 
-                // TODO am testing with new activity, uncoment above line if not
                 Intent commsIntent = new Intent(DeviceListActivity.this, BluetoothAmlDashboardActivity.class);
 
                 commsIntent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, address);
@@ -246,8 +209,7 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
                 //set Result, end this activity and start BTDataTransferActivity
                 setResult(RESULT_OK, commsIntent);
                 startActivity(commsIntent);
-                commsIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                finish();
+
             } else {
                 setResult(RESULT_CANCELED);
             }
@@ -305,6 +267,9 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         }
     };
 
+    /**
+     * Broadcast receiver to listen for changes to the state of the connectability of the Bluetooth Adapter.
+     */
     private BroadcastReceiver mReceiver2 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -328,6 +293,10 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         }
     };
 
+    /**
+     * Un registers receivers during the on pause state, as they won't be needed
+     * whilst users are not utilising the application
+     */
     @Override
     protected void onPause() {
         super.onPause();
@@ -340,6 +309,9 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         }
     }
 
+    /**
+     * Setup BT is it is not already upon resuming an activity (if user navigates away)
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -348,6 +320,10 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         //getPairedDevices();
     }
 
+    /**
+     * Cancels any active discoveries and de-registers broadcast receivers
+     * when activity is destroyed.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -386,6 +362,10 @@ public class DeviceListActivity extends AppCompatActivity implements ActivityCom
         }
     }
 
+    /**
+     * OVerrides from the permissions interface, only allow discovery once Bluetooth permissions have been given.
+     * @param request_code
+     */
     @Override
     public void PermissionGranted(int request_code) {
         Log.d("PERMISSION","GRANTED");

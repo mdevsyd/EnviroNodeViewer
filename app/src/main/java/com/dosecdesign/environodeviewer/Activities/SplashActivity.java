@@ -44,9 +44,7 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
                 try{
                     Thread.sleep(1000);
-                    Log.d(Constants.DEBUG_TAG, "done 1");
                     Thread.sleep(1000);
-                    Log.d(Constants.DEBUG_TAG, "done 2");
 
                     startApplication();
 
@@ -57,6 +55,10 @@ public class SplashActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+    /**
+     * Starts the EnviroNode Viewer application
+     */
 
     public void startApplication(){
         Intent startAppIntent = new Intent(SplashActivity.this, OptionSelectActivity.class);

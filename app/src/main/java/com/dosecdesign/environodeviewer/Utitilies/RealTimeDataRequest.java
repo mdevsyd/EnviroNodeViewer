@@ -4,10 +4,8 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.dosecdesign.environodeviewer.Services.BtLoggerSPPService;
-import com.dosecdesign.environodeviewer.Utitilies.Constants;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Calendar;
 
 /**
  * Class makes real time requests to CC2564 on AML.
@@ -17,196 +15,195 @@ import java.util.TimerTask;
 public class RealTimeDataRequest {
 
     private BtLoggerSPPService service;
-    private Handler mBattHandler, mNameHandler, mCommentHandler, mSerialHandler, mExtHandler, mChannelHandler;
-    private Timer mBattTimer, mCommentTimer, mExternalTimer, mSerialTimer, mNameTimer, mChannelTimer ;
-    private TimerTask mExternalTimerTask, mCommentTimerTask, mSerialTimerTask, mNameTimerTask, mBattTimerTask=null, mChTimerTask;
+    private Handler mBattHandler, mNameHandler, mCommentHandler, mSerialHandler, mExtHandler, mChannelHandler, mRefreshHandler, mMsgTimerHandler;
+    private byte[] mMsg;
+    boolean gotMsg = false;
+
 
 
     public RealTimeDataRequest(BtLoggerSPPService service){
         this.service=service;
     }
 
+    public void startMsgTimer(){
+        mMsgTimerHandler = new Handler();
+        mMsgTimerHandler.postDelayed( timerRun, 2000);
+    }
+
+    public Boolean gotMessage(){
+        return gotMsg;
+    }
+
+    public void setGotMsg(Boolean result){
+        this.gotMsg = result;
+    }
+
+    private Runnable timerRun = new Runnable() {
+        @Override
+        public void run() {
+            //service.write("SF0".getBytes());
+        }
+    };
+
     /**
      * Request the overall unit name set by user after 1 second delay.
      */
     public void requestUnitName() {
+        Log.d(Constants.DEBUG_TAG,"req name");
+
         mNameHandler = new Handler();
-        mNameTimer = new Timer();
-        mNameTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                mNameHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        service.write("SF0".getBytes());
-                    }
-                });
-            }
-        };
-        mNameTimer.schedule(mNameTimerTask, 400, 1000);
+        mNameHandler.postDelayed(nameRun, 1000);
+
+        Log.d(Constants.DEBUG_TAG, "name handler done");
+
     }
+
+    private Runnable nameRun = new Runnable() {
+        @Override
+        public void run() {
+            service.write("SF0".getBytes());
+        }
+    };
 
     /**
      * Request the overall unit comment set by user after 1.05 sec delay.
      */
     public void requestUnitComment() {
 
-        mCommentHandler = new Handler();
-        mCommentTimer = new Timer();
-        mCommentTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                mCommentHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        service.write("SD0".getBytes());
-                    }
-                });
-            }
-        };
-
-        mCommentTimer.schedule(mCommentTimerTask, 450, 1000);
+        mCommentHandler =new Handler();
+        mCommentHandler.postDelayed(commentRun, 125);
     }
+    private Runnable commentRun = new Runnable() {
+        @Override
+        public void run() {
+            service.write("SD0".getBytes());
+        }
+    };
 
     /**
      * Request serial number from CC2564 after 1.1 second delay.
      */
     public void requestSerialNumber() {
+        Log.d(Constants.DEBUG_TAG,"serial req");
         mSerialHandler = new Handler();
-        mSerialTimer = new Timer();
-        mSerialTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                mSerialHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        service.write("AL0".getBytes());
-                    }
-                });
-            }
-        };
-        mSerialTimer.schedule(mSerialTimerTask, 350, 1000);
+        mSerialHandler.postDelayed(serialRun, 150);
     }
+    private Runnable serialRun = new Runnable() {
+        @Override
+        public void run() {
+            service.write("AL0".getBytes());
+        }
+    };
 
     /**
      * Request external supply details from CC2564 after 600ms delay
      * once a second.
      */
     public void requestExternalSupply() {
+        Log.d(Constants.DEBUG_TAG,"req ext supply");
         mExtHandler = new Handler();
-        mExternalTimer = new Timer();
-        mExternalTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                mExtHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Request external supply voltage
-                        service.write("AY0".getBytes());
-                    }
-                });
-            }
-        };
-        mExternalTimer.schedule(mExternalTimerTask, 600, 1000);
+        mExtHandler.postDelayed(extRun, 200);
+
     }
+    private Runnable extRun = new Runnable() {
+        @Override
+        public void run() {
+            service.write("AY0".getBytes());
+            //mExtHandler.postDelayed(this,3000);
+        }
+    };
 
     /**
      * Request battery voltage and temperature from CC2564 after 500ms delay
      * once a second.
      */
-    /*public void requestBattDetails(){
-        mBattHandler = new Handler();
-        final int delay = 1000;
-        mBattHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                service.write("AW0".getBytes());
-                mBattHandler.postDelayed(this,delay);
-            }
-        }, delay);
-    }*/
+
     public void requestBattDetails() {
         mBattHandler = new Handler();
-        mBattTimer = new Timer();
-        mBattTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                mBattHandler.post(new Runnable() {
-                    public void run() {
-                        // Here we wish to update each widget's values once every second
-                        // Request batt voltage and batt temperature
-                        service.write("AW0".getBytes());
-                    }
-                });
-            }
-        };
-
-        mBattTimer.schedule(mBattTimerTask, 450, 1000);
+        mBattHandler.postDelayed(battRun, 500);
     }
-    public void getOnceOffBattV(){
-        //Log.d(Constants.DEBUG_TAG, "")
-        service.write("AW0".getBytes());
-    }
+    // runnable to execute every ten seconds
+    private Runnable battRun = new Runnable() {
+        @Override
+        public void run() {
+            service.write("AW0".getBytes());
+           // mBattHandler.postDelayed(this,10000);
+        }
+    };
 
     /**
-     * Requests channel data from AML once a second based on msg generated
+     * Requests channel data from device once a second based on msg generated
      * in dashboard activity.
      * @param msg - byte array length 7 containing the command and channel index
      */
     public void requestChannelData(final byte[] msg) {
+        mMsg=msg;
         // handler for timer task
         mChannelHandler = new Handler();
-        // create background timer
-        mChannelTimer = new Timer();
-        // create Timer Task to execute the request for data to CC2564
-        mChTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                mChannelHandler.post(new Runnable() {
-                    public void run() {
-                        service.write(msg);
-                    }
-                });
-            }
-        };
-        // schedule timer for 500ms delay, frequency of 1000ms
-        mChannelTimer.schedule(mChTimerTask, 500, 1000);
+        // execute the runnable after 400ms
+        mChannelHandler.postDelayed(chanRun, 400);
+
     }
+
+    /**
+     * Writes a message to CC2564 once every 2 seconds
+     */
+    private Runnable chanRun = new Runnable() {
+        @Override
+        public void run() {
+            // send the channel request byte[] to CC2564
+            service.write(mMsg);
+            // repeat every 2 seconds
+            //mChannelHandler.postDelayed(this,1000);
+        }
+    };
+
+
+    public void refreshTasks(){
+        mRefreshHandler = new Handler();
+        mRefreshHandler.postDelayed(refreshRun, 100);
+    }
+
+    private Runnable refreshRun = new Runnable() {
+        @Override
+        public void run() {
+            Log.d(Constants.DEBUG_TAG,"refreshing runnables "+ Calendar.getInstance().getTime());
+            cancelActiveHandlers();
+            requestUnitName();
+            /*requestUnitComment();
+            requestSerialNumber();
+            requestBattDetails();
+            requestExternalSupply();
+            requestChannelData(mMsg);*/
+            mRefreshHandler.postDelayed(this,120000);
+        }
+    };
 
     /**
      * Cancels any active timers and timerTasks, to eliminate
      * unneeded processes.
      */
-    public void cancelActiveTimers() {
-        if (mBattTimerTask != null) {
-            mBattTimer.cancel();
-            mBattTimer.purge();
-            mBattTimerTask.cancel();
+    public void cancelActiveHandlers() {
+
+        if(mBattHandler!=null){
+            mBattHandler.removeCallbacks(battRun);
         }
-        if(mCommentTimerTask !=null){
-            mCommentTimer.cancel();
-            mCommentTimer.purge();
-            mCommentTimerTask.cancel();
+        if(mNameHandler!=null){
+            mNameHandler.removeCallbacks(nameRun);
+
         }
-        if(mExternalTimerTask !=null){
-            mExternalTimer.cancel();
-            mExternalTimer.purge();
-            mExternalTimerTask.cancel();
+        if(mCommentHandler!=null) {
+            mCommentHandler.removeCallbacks(commentRun);
         }
-        if(mSerialTimerTask !=null){
-            mSerialTimer.cancel();
-            mSerialTimer.purge();
-            mSerialTimerTask.cancel();
+        if(mSerialHandler!=null) {
+            mSerialHandler.removeCallbacks(serialRun);
         }
-        if(mNameTimerTask !=null){
-            mNameTimer.cancel();
-            mNameTimer.purge();
-            mNameTimerTask.cancel();
+        if(mExtHandler!=null) {
+            mExtHandler.removeCallbacks(extRun);
         }
-        if(mChTimerTask!=null){
-            mChannelTimer.cancel();
-            mChannelTimer.purge();
-            mChTimerTask.cancel();
+        if(mChannelHandler!=null) {
+            mChannelHandler.removeCallbacks(chanRun);
         }
+
     }
 }

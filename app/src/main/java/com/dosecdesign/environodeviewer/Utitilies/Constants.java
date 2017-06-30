@@ -51,6 +51,9 @@ public class Constants {
     public static final int READ_BLOCK_SIZE = 100;
 
     // Intent constants
+    public static final String SELECTED_HUB = "selected_hub";
+    public static final String SELECTED_INSTRUMENT = "selected_inst";
+    public static final String SELECTED_CHANNEL_NAME = "selected_ch_name";
     public static final String SELECTED_CHANNELS = "selected_channels";
     public static final String SEL_CH_ARRAY = "selected_channels_array";
     public static final String DATESTAMP_ARRAY = "query_datestamp_array";

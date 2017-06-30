@@ -15,7 +15,7 @@
     <string name="title_connecting">STATE: Connecting...</string>
     <string name="title_disconnected">STATE: Not Connected</string>
     <string name="toast_unable_to_connect">Unable to connect device</string>
-    <string name="toast_connection_lost">Your device was disconnected</string>
+    <string name="toast_connection_lost">Your device is disconnected</string>
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
     <string name="plot">Plot Data</string>
@@ -91,6 +91,15 @@
     <string name="aml_connecting">Your Device is Connecting</string>
     <string name="aml_not_connected">No Device is Connected</string>
     <string name="re_connected">Your device was re-connected</string>
+    <string name="yes">Yes</string>
+    <string name="no">no</string>
+    <string name="device_conn_fail">Cannot connect to this device at this time</string>
+    <string name="sensor_channel_5">Sensor Channel 5</string>
+    <string name="sensor_channel_4">Sensor Channel 4</string>
+    <string name="sensor_channel_3">Sensor Channel 3</string>
+    <string name="soil_temperature">Soil Temperature</string>
+    <string name="volumetric_water_content">Volumetric Water Content</string>
+    <string name="volumetric_soil_moisture">Volumetric Soil Moisture</string>
 
 
 </resources>

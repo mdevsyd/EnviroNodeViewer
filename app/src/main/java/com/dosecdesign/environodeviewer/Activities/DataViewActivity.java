@@ -55,6 +55,11 @@ public class DataViewActivity extends AppCompatActivity {
 
     private TextView mPlotTitleTv, mHubTv, mInstTv  ;
 
+    /**
+     * Setup the activity views, obtain the cached response from the query that takes us to this
+     * activity.
+     * @param savedInstanceState - the bundle holding contents passed to this activity
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,25 +98,8 @@ public class DataViewActivity extends AppCompatActivity {
         mHubTv = (TextView) findViewById(R.id.hubTv);
         mInstTv = (TextView) findViewById(R.id.instTv);
 
-        // Create an array of colours - 12 repeated colours currently
-        for (int i = 0; i < 3; i++) {
-            mColours.add(R.color.graphBlue);
-            mColours.add(R.color.graphGreen);
-            mColours.add(R.color.graphRed);
-            mColours.add(R.color.graphYellow);
-        }
-
         getValuesFromResponse(extras.getInt(Constants.SELECTED_CHANNELS), mSelChannels);
     }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        // Clear the response data when user presses the back key
-        mAllData.clear();
-    }
-
 
     /**
      * Create entries for line chart. Creates a dataset and lineData
@@ -212,6 +200,10 @@ public class DataViewActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Formatter used to return the value stored in array of dates to be
+     * displayed on the XAxis of chart
+     */
     public class MyAxisValueFormatter implements IAxisValueFormatter {
 
         private String[] mXVals;

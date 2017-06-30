@@ -47,7 +47,6 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Created by Michi on 21/02/2017.
  * Activity to allow user to select  site, hub, instrument and channel they wish to query the server for.
  *
  */
@@ -119,6 +118,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     private URL mUrl;
 
 
+    /**
+     * Sets up the views and buttons of this activity. Requests the site data for account 53 (demo)
+     * and click listeners for all clickeable items in the view
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -176,6 +179,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
         mCachedResponse = mDevMem.readFromCache(getCacheDir(), "site");
 
+
+        mEndDate = mTimeUtils.getFormattedCurrentDateTime();
+        mStartDate = mTimeUtils.formatDate(mTimeUtils.addOrSubDays(-1, Calendar.getInstance().getTime()));
+        Log.d(Constants.DEBUG_TAG,"date defaults: "+mStartDate+" "+mEndDate);
         mStartTime = "00:00:00";
         mEndTime = "00:00:00";
         mStartDateStamp = "";
@@ -194,8 +201,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
         mHttpError=false;
         if (mCachedResponse != null) {
-            Log.d(Constants.DEBUG_TAG, "GetSiteData(mCachedResponse)");
-            //new GetSiteDataTask().execute(mCachedResponse);
+            //
         } if (1>0){
             try {
                 String baseUrl = mHttpUtil.buildUrl();
@@ -223,6 +229,9 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
     }
 
+    /**
+     * Initialise the action register to zeros
+     */
     private void initialiseActionRegister() {
         // 16 int array is to set certain actions within this activity
         // Initialise all to false
@@ -232,6 +241,9 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
+    /**
+     * Clear the selected channels for when a user returns to the view after graphing
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -240,8 +252,8 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     /**
-     *
-     * @param v
+     * Actions for each clickeable item in the view
+     * @param v - the view id for the clicked item
      */
     @Override
     public void onClick(View v) {
@@ -446,6 +458,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
+                        Log.e(Constants.ERROR_TAG, "Malformed URL after clicking GoBtn in SearchAvtivity");
                     }
 
                 } else if((mSelectedChannels.size()==0) || (mSelectedHub==null) || (mSelectedInstrument==null)){
@@ -463,6 +476,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 newDate = mTimeUtils.addOrSubDays(-1, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+
                 mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
             case R.id.last7DaysBtn:
@@ -470,6 +484,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 newDate = mTimeUtils.addOrSubDays(-7, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                Log.d(Constants.DEBUG_TAG,"date :"+mStartDateStamp+" to "+mEndDateStamp);
                 mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
             case R.id.lastMonthBtn:
@@ -477,6 +492,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 newDate = mTimeUtils.addOrSubMonths(-1, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                Log.d(Constants.DEBUG_TAG,"date :"+mStartDateStamp+" to "+mEndDateStamp);
                 mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
             case R.id.last365DaysBtn:
@@ -484,6 +500,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                 newDate = mTimeUtils.addOrSubYears(-1, Calendar.getInstance().getTime());
                 mStartDateStamp = mTimeUtils.formatDate(newDate);
                 mEndDateStamp = mTimeUtils.getFormattedCurrentDateTime();
+                Log.d(Constants.DEBUG_TAG,"date :"+mStartDateStamp+" to "+mEndDateStamp);
                 mDateTimeTv.setText(mStartDateStamp+" to "+mEndDateStamp);
                 break;
 
@@ -492,6 +509,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
     }
 
 
+    /**
+     * Async tasks that takes a URL parameter and queries the server using an HTTP connection. Upon
+     * success, it initiates the next task based on a set flag.
+     */
     public class RetrieveJsonDataTask extends AsyncTask<URL, String, String> {
 
         @Override
@@ -541,6 +562,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
             } catch (IOException e) {
                 e.printStackTrace();
+                Log.e(Constants.ERROR_TAG,"IO Exception in RetrieveJsonDataTask, while trying to read inputstream");
             } finally {
                 if (mConnection != null) {
                     mConnection.disconnect();
@@ -552,6 +574,7 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                 } catch (IOException e) {
                     e.printStackTrace();
+                    Log.e(Constants.ERROR_TAG,"IO Exception in RetrieveJsonDataTask, while attempting to close BufferedReader");
                 }
             }
 
@@ -599,6 +622,9 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                             // create a bundle and add the string array containing date stamps
                             Bundle b = new Bundle();
                             b.putStringArray(Constants.DATESTAMP_ARRAY,dateList);
+                            b.putString(Constants.SELECTED_HUB, mSelectedHub);
+                            b.putString(Constants.SELECTED_INSTRUMENT, mSelectedInstrument);
+                            b.putString(Constants.SELECTED_CHANNEL_NAME, String.valueOf(mSelectedChannels.get(0)));
                             // add bundle to intent
                             intent.putExtras(b);
                             // Reset action register before starting next activity
@@ -608,9 +634,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            Log.e(Constants.ERROR_TAG,"JSON error getting date stamps in SearchActivity");
+                            Log.e(Constants.ERROR_TAG,"JSON Exception  in RetrieveJsonDataTask, while trying to create JSON object");
                         }catch (RuntimeException e){
                             e.printStackTrace();
+                            Log.e(Constants.ERROR_TAG,"Runtime Exception in RetrieveJsonDataTask, while trying access JSON array");
                         }
 
 
@@ -633,20 +660,33 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
+    /**
+     * Method to check if any data exists inside the API response
+     * @param response - the String containing returned data from API call
+     * @return - true if data exists, false if not
+     */
     private Boolean checkDataArray(String response) {
         try {
-
+            // create JSON object from the API response
             JSONObject responseObj = new JSONObject(response);
+            // get access to the data array
             JSONArray dataArray = responseObj.getJSONArray("data");
+            // check array length
             if (dataArray.length() > 0) {
                 return true;
             }
         } catch (JSONException e) {
             e.printStackTrace();
+            Log.e(Constants.ERROR_TAG,"JSON Exception in checkDataArray while trying to create JSON object");
         }
         return false;
     }
 
+    /**
+     * Async task updates the UI with site data as per response string sent this method call.
+     * Upon success, the data is updated on the UI using the adapter and a item click listener is set to
+     * react to user selection
+     */
     public class GetSiteDataTask extends AsyncTask<String, String, List> {
 
         @Override
@@ -706,7 +746,11 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
 
         }
     }
-
+    /**
+     * Async task updates the UI with hub data as per response string sent this method call.
+     * Upon success, the data is updated on the UI using the adapter and a item click listener is set to
+     * react to user selection
+     */
     public class GetHubDataTask extends AsyncTask<String, String, List> {
 
         @Override
@@ -779,7 +823,11 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
             }
         }
     }
-
+    /**
+     * Async task updates the UI with  Instrument data as per response string sent this method call.
+     * Upon success, the data is updated on the UI using the adapter and a item click listener is set to
+     * react to user selection
+     */
     public class GetInstrumentDataTask extends AsyncTask<String, String, List> {
 
         @Override
@@ -857,6 +905,11 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
+    /**
+     * Async task updates the UI with channel data as per response string sent this method call.
+     * Upon success, the data is updated on the UI using the adapter and a item click listener is set to
+     * react to user selection
+     */
     public class GetChannelDataTask extends AsyncTask<String, String, List> {
 
 
@@ -881,7 +934,11 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
                         JSONObject channel = mChannelsArray.getJSONObject(j);
                         if (channel != null) {
                             String channelName = channel.getString("name");
-                            channels.add(channelName);
+                            // do not show DateAndTime channel as it is not plottable
+                            if(!channelName.equals("DateAndTime")){
+                                channels.add(channelName);
+                            }
+
                         }
                     }
                 }
@@ -933,6 +990,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
+    /**
+     * Clears the selected channel list and name when user returns to previous activity
+     *
+     */
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -941,6 +1002,10 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         mChNameTv.setText("");
     }
 
+    /**
+     * Method required to allow a listview inside a scrollview.
+     * @param listView -  the listview the user wants to scroll inside of the scrollview
+     */
     public static void setListViewHeight(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null)
@@ -962,12 +1027,16 @@ public class SearchActivity extends AppCompatActivity implements View.OnClickLis
         listView.setLayoutParams(params);
     }
 
+    /**
+     * Set the date variables to use and update the UI
+     */
     public void setDateResult(){
-        if(mActionReg[1] && mActionReg[2] && mActionReg[3] && mActionReg[4]){
+        if(mActionReg[1] || mActionReg[2] || mActionReg[3] || mActionReg[4]){
             String startDateTime = mStartDate + " " + mStartTime;
             String endDateTime = mEndDate + " " + mEndTime;
             /*mStartRes.setText(startDateTime);
             mEndRes.setText(endDateTime);*/
+            Log.d(Constants.DEBUG_TAG,"date :"+mStartDate + " " + mStartTime+" to "+mEndDate + " " + mEndTime);
             mDateTimeTv.setText(startDateTime+" to "+endDateTime);
         }
 
